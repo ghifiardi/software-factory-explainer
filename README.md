@@ -24,6 +24,6 @@ and no dependencies beyond Google Fonts. Open `index.html` in a browser to run i
 
 ## Based on
 
-The design follows a real starter kit: requests are GitHub issues, the AI builder is Claude Code
+The design follows a real starter kit: requests are GitHub issues, the AI builder is an AI coding agent
 running in a disposable GitHub Actions machine, the checks are the project's own CI, and changes
 ship as reviewed pull requests.
