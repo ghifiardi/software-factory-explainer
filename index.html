@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inside a Software Factory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a factory floor seen from above. One conveyor of stations, a feedback loop underneath,
+   a live report board. Concrete neutrals, one safety-orange signal colour, signage type for names. */
+:root {
+  --floor: #E8E6E1;
+  --panel: #F8F7F4;
+  --ink: #1C2330;
+  --muted: #5B6372;
+  --rule: #CBC6BC;
+  --signal: #D9531A;
+  --signal-ink: #FFFFFF;
+  --ok: #2E7A4E;
+  --warn: #A86A12;
+  --stop: #B23A2F;
+  --track: #D6D2C9;
+  --display: "Big Shoulders Display", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --floor: #14181E; --panel: #1C222A; --ink: #E9E6E0; --muted: #9AA2AF; --rule: #343C47;
+    --signal: #FF7A3D; --signal-ink: #1A1206; --ok: #55BE84; --warn: #E0A040; --stop: #F0705F; --track: #262D36;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --floor: #14181E; --panel: #1C222A; --ink: #E9E6E0; --muted: #9AA2AF; --rule: #343C47;
+  --signal: #FF7A3D; --signal-ink: #1A1206; --ok: #55BE84; --warn: #E0A040; --stop: #F0705F; --track: #262D36;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--floor); color: var(--ink); font: 17px/1.5 var(--body); }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 28px clamp(16px, 3vw, 36px) 56px; display: grid; gap: 28px; }
+
+/* ── Header ── */
+header { display: grid; gap: 10px; max-width: 70ch; }
+.eyebrow { font: 700 13px/1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--signal); }
+h1 { font: 800 clamp(44px, 7vw, 84px)/.9 var(--display); letter-spacing: .01em; text-transform: uppercase; margin: 0; text-wrap: balance; }
+.lede { font-size: 19px; margin: 4px 0 0; color: var(--ink); }
+.lede em { font-style: normal; background: linear-gradient(transparent 62%, color-mix(in srgb, var(--signal) 30%, transparent) 62%); }
+
+/* ── Controls ── */
+.controls { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+button, select { font: 700 15px/1 var(--body); color: var(--ink); background: var(--panel); border: 1.5px solid var(--ink); border-radius: 6px; padding: 11px 16px; cursor: pointer; }
+button:hover, select:hover { background: color-mix(in srgb, var(--ink) 8%, var(--panel)); }
+button:focus-visible, select:focus-visible, .station:focus-visible, .token:focus-visible, .loop-step:focus-visible { outline: 3px solid var(--signal); outline-offset: 2px; }
+button.primary { background: var(--signal); color: var(--signal-ink); border-color: var(--signal); }
+button.primary:hover { background: color-mix(in srgb, var(--signal) 85%, var(--ink)); }
+.send-group { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.send-group span, .speed span { font-size: 14px; color: var(--muted); font-weight: 700; }
+.chip-btn { padding: 9px 12px; font-size: 14px; border-width: 1.5px; }
+.chip-btn .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+.speed { display: flex; gap: 6px; align-items: center; margin-left: auto; }
+.speed button[aria-pressed="true"] { background: var(--ink); color: var(--floor); }
+label.auto { display: flex; gap: 8px; align-items: center; font-size: 14px; font-weight: 700; color: var(--muted); cursor: pointer; }
+label.auto input { width: 18px; height: 18px; accent-color: var(--signal); }
+
+/* ── Board (report card) ── */
+.board { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+.stat { background: var(--panel); padding: 14px 16px; display: grid; gap: 2px; align-content: start; }
+.stat .k { font-size: 13px; color: var(--muted); font-weight: 700; }
+.stat .v { font: 800 38px/1 var(--display); font-variant-numeric: tabular-nums; }
+.stat .s { font-size: 13px; color: var(--muted); }
+.stat.hero .v { color: var(--signal); }
+.budget-bar { height: 8px; background: var(--track); border-radius: 4px; overflow: hidden; margin-top: 6px; }
+.budget-bar i { display: block; height: 100%; background: var(--ok); width: 100%; transition: width .4s, background .4s; }
+.budget-bar i.low { background: var(--warn); } .budget-bar i.empty { background: var(--stop); }
+
+/* ── Factory floor ── */
+.floor-wrap { position: relative; }
+.floor { position: relative; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 12px; }
+.floor::before { content: ""; position: absolute; left: 4%; right: 4%; top: 118px; height: 10px; border-radius: 5px;
+  background: repeating-linear-gradient(90deg, var(--track) 0 18px, color-mix(in srgb, var(--track) 55%, var(--rule)) 18px 22px);
+  background-size: 22px 10px; z-index: 0; }
+.running .floor::before { animation: belt 1.1s linear infinite; }
+@keyframes belt { to { background-position: 22px 0; } }
+.station { position: relative; z-index: 1; background: var(--panel); border: 1.5px solid var(--rule); border-radius: 8px; padding: 12px 12px 10px; display: grid; grid-template-rows: auto auto 1fr auto; gap: 6px; cursor: pointer; min-height: 250px; text-align: left; transition: border-color .2s, box-shadow .2s; }
+.station:hover { border-color: var(--ink); }
+.station.selected { border-color: var(--signal); box-shadow: 0 0 0 2px var(--signal) inset; }
+.station.pulse { animation: pulse .6s ease; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--signal) 40%, transparent); } }
+.station .num { font: 800 15px/1 var(--display); color: var(--muted); letter-spacing: .05em; }
+.station .icon { width: 38px; height: 38px; color: var(--ink); }
+.station h3 { margin: 0; font: 800 clamp(19px, 1.85vw, 24px)/1 var(--display); text-transform: uppercase; letter-spacing: .01em; overflow-wrap: anywhere; hyphens: auto; }
+.station .one { margin: 0; font-size: 14px; line-height: 1.35; color: var(--muted); }
+.station .bay { min-height: 64px; border-top: 1.5px dashed var(--rule); margin-top: 4px; }
+.station .tally { font-size: 12.5px; color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; min-height: 1.4em; }
+.station .tally b { color: var(--ink); }
+.station.human { background: color-mix(in srgb, var(--signal) 9%, var(--panel)); }
+.tag-person { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--signal); }
+
+.tokens { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.token { position: absolute; left: 0; top: 0; width: 46px; height: 26px; border-radius: 5px; border: 1.5px solid var(--ink); background: var(--panel);
+  font: 700 12px/23px var(--body); text-align: center; font-variant-numeric: tabular-nums; color: var(--ink);
+  transition: transform .75s cubic-bezier(.5,0,.25,1), opacity .5s, background .3s; pointer-events: auto; cursor: pointer; padding: 0; }
+.token::before { content: ""; position: absolute; left: 4px; top: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--c, var(--ok)); }
+.token { padding-left: 10px; }
+.token.working { animation: jiggle .5s ease-in-out infinite alternate; }
+@keyframes jiggle { from { margin-top: 0; } to { margin-top: -3px; } }
+.token .flag { position: absolute; right: -8px; top: -9px; min-width: 18px; height: 18px; border-radius: 9px; font: 700 12px/18px var(--body); color: #fff; padding: 0 4px; }
+.token.out { opacity: 0; }
+.token.focus { box-shadow: 0 0 0 3px var(--signal); }
+
+/* type colours (dot) */
+.t-clear { --c: var(--ok); } .t-vague { --c: var(--warn); } .t-risky { --c: var(--stop); } .t-stranger { --c: #7C68C8; }
+.dot.t-clear { background: var(--ok); } .dot.t-vague { background: var(--warn); } .dot.t-risky { background: var(--stop); } .dot.t-stranger { background: #7C68C8; }
+
+/* ── Lower area: explainer + loop + log ── */
+.lower { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.card { background: var(--panel); border: 1.5px solid var(--rule); border-radius: 8px; padding: 20px 22px; }
+.card h2 { margin: 0 0 4px; font: 800 30px/1 var(--display); text-transform: uppercase; letter-spacing: .02em; text-wrap: balance; }
+.card .sub { margin: 0 0 14px; color: var(--muted); font-size: 15px; }
+#detail p { margin: 0 0 12px; max-width: 62ch; }
+#detail .real { border-left: 4px solid var(--signal); padding: 8px 12px; background: color-mix(in srgb, var(--signal) 7%, transparent); font-size: 15px; }
+#detail .real b { display: block; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--signal); }
+#detail ol { margin: 6px 0 0; padding-left: 20px; font-size: 15px; }
+#detail ol li { margin-bottom: 3px; }
+
+.loop { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 8px 0 16px; position: relative; }
+.loop-step { border: 1.5px solid var(--rule); border-radius: 8px; padding: 10px; display: grid; gap: 4px; align-content: start; cursor: pointer; background: var(--floor); transition: border-color .2s, background .2s; text-align: left; font: inherit; color: inherit; }
+.loop-step:hover { border-color: var(--ink); }
+.loop-step.active { border-color: var(--signal); background: color-mix(in srgb, var(--signal) 14%, var(--panel)); }
+.loop-step .n { font: 800 26px/1 var(--display); color: var(--signal); }
+.loop-step b { font-size: 14px; line-height: 1.2; }
+.loop-step span { font-size: 12.5px; color: var(--muted); line-height: 1.3; }
+.loop-status { font-size: 15px; margin: 0 0 12px; min-height: 2.6em; }
+.book { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+.book .ver { font: 800 46px/1 var(--display); font-variant-numeric: tabular-nums; }
+.book .lbl { font-size: 13px; color: var(--muted); font-weight: 700; line-height: 1.3; }
+.skill { flex: 1 1 160px; }
+.skill .bar { height: 10px; border-radius: 5px; background: var(--track); overflow: hidden; }
+.skill .bar i { display: block; height: 100%; width: 35%; background: var(--signal); transition: width 1s; }
+canvas { width: 100%; height: 150px; display: block; }
+.chart-cap { font-size: 13px; color: var(--muted); margin: 4px 0 0; }
+
+.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; font-size: 14.5px; max-height: 300px; overflow: auto; }
+.log li { padding: 8px 0; border-bottom: 1px solid var(--rule); display: grid; grid-template-columns: 52px 1fr; gap: 10px; }
+.log li:first-child { animation: fadein .5s; }
+@keyframes fadein { from { background: color-mix(in srgb, var(--signal) 18%, transparent); } }
+.log .when { font: 800 14px/1.5 var(--display); color: var(--muted); letter-spacing: .04em; }
+.log .good { color: var(--ok); font-weight: 700; } .log .bad { color: var(--stop); font-weight: 700; } .log .meh { color: var(--warn); font-weight: 700; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13.5px; color: var(--muted); }
+.legend .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+footer { font-size: 13.5px; color: var(--muted); max-width: 80ch; }
+
+/* ── Responsive ── */
+@media (max-width: 1100px) {
+  .floor { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .floor::before { display: none; }
+  .lower { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .floor { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .station { min-height: 220px; }
+  .loop { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .speed { margin-left: 0; }
+  .stat .v { font-size: 32px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+
+<header>
+  <div class="eyebrow">Interactive explainer</div>
+  <h1>Inside a Software Factory</h1>
+  <p class="lede">A software factory is an assembly line for changes to an app. People write down what they need; AI workers build it inside sealed rooms; automatic checks and a human reviewer approve it. And once a week <em>the factory studies its own mistakes and improves its instructions.</em></p>
+</header>
+
+<div class="controls" role="group" aria-label="Simulation controls">
+  <button class="primary" id="run" aria-pressed="false">Pause</button>
+  <div class="send-group" aria-label="Send a request">
+    <span>Send a request:</span>
+    <button class="chip-btn" data-send="clear"><i class="dot t-clear"></i>Clear</button>
+    <button class="chip-btn" data-send="vague"><i class="dot t-vague"></i>Vague</button>
+    <button class="chip-btn" data-send="risky"><i class="dot t-risky"></i>Sensitive</button>
+    <button class="chip-btn" data-send="stranger"><i class="dot t-stranger"></i>From a stranger</button>
+  </div>
+  <label class="auto"><input type="checkbox" id="auto" checked> Keep requests coming</label>
+  <div class="speed" role="group" aria-label="Speed">
+    <span>Speed</span>
+    <button class="chip-btn" data-speed="1" aria-pressed="true">1×</button>
+    <button class="chip-btn" data-speed="2" aria-pressed="false">2×</button>
+    <button class="chip-btn" data-speed="4" aria-pressed="false">4×</button>
+    <button class="chip-btn" id="reset">Start over</button>
+  </div>
+</div>
+
+<section class="board" aria-label="Factory report card">
+  <div class="stat"><span class="k">Week</span><span class="v" id="s-week">1</span><span class="s" id="s-weekprog">day 1 of 5</span></div>
+  <div class="stat"><span class="k">Changes shipped</span><span class="v" id="s-shipped">0</span><span class="s" id="s-inflight">0 on the line</span></div>
+  <div class="stat hero"><span class="k">People-time per change</span><span class="v" id="s-mins">–</span><span class="s">minutes · by hand ≈ 120</span></div>
+  <div class="stat"><span class="k">Quality score</span><span class="v" id="s-quality">–</span><span class="s">out of 5, graded weekly</span></div>
+  <div class="stat"><span class="k">Caught &amp; stopped</span><span class="v" id="s-caught">0</span><span class="s" id="s-caughtdetail">before reaching anyone</span></div>
+  <div class="stat"><span class="k">Budget left this month</span><span class="v" id="s-budget">$40</span><div class="budget-bar"><i id="s-budgetbar"></i></div></div>
+</section>
+
+<div class="legend" aria-label="Kinds of request">
+  <span><i class="dot t-clear"></i>Clear request</span>
+  <span><i class="dot t-vague"></i>Vague request</span>
+  <span><i class="dot t-risky"></i>Sensitive request (passwords, payments)</span>
+  <span><i class="dot t-stranger"></i>Request from someone outside the team</span>
+  <span>Click a station or any work order to learn more.</span>
+</div>
+
+<div class="floor-wrap">
+  <div class="floor" id="floor"></div>
+  <div class="tokens" id="tokens" aria-live="off"></div>
+</div>
+
+<div class="lower">
+  <section class="card" id="detail" aria-live="polite"></section>
+
+  <section class="card">
+    <h2>The self-improvement loop</h2>
+    <p class="sub">This is what turns an assembly line into a factory that gets better on its own.</p>
+    <div class="loop" id="loop"></div>
+    <p class="loop-status" id="loop-status">Waiting for the first week to finish…</p>
+    <div class="book">
+      <div><div class="ver" id="book-ver">v1</div><div class="lbl">Instruction<br>book</div></div>
+      <div class="skill"><div class="lbl" style="margin-bottom:6px">How often the AI gets it right first time: <b id="skill-pct">35%</b></div><div class="bar"><i id="skill-bar"></i></div></div>
+    </div>
+    <canvas id="chart" aria-label="Chart of people-time per shipped change by week" role="img"></canvas>
+    <p class="chart-cap">People-time per shipped change, week by week. Lower is better.</p>
+  </section>
+</div>
+
+<section class="card">
+  <h2>What just happened</h2>
+  <p class="sub">A plain-language log of the factory floor, newest first.</p>
+  <ul class="log" id="log"></ul>
+</section>
+
+<footer>All numbers here are illustrative, made up to show how the parts fit together. In a real factory they come from the factory's logbook. Built on the same design as a real starter kit: requests are GitHub issues, the AI builder is Claude Code running in a disposable cloud machine, the checks are the project's own tests, and changes ship as reviewed pull requests.</footer>
+</div>
+
+<script>
+(() => {
+  // ───────────────────────── content ─────────────────────────
+  const ICON = {
+    inbox: '<path d="M4 13h5l1.5 3h3L15 13h5M4 13l2.5-8h11L20 13v6H4z"/>',
+    triage: '<path d="M9 4h6v3H9zM6 6H5v15h14V6h-1M8.5 12l2 2 4-4.5M8.5 17.5h7"/>',
+    gate: '<path d="M4 21V5h4v16M16 21V5h4v16M8 9h8M8 14h8M12 9v5"/>',
+    workshop: '<path d="M3 21V10l6 3V10l6 3V6h6v15zM7 17h2M12 17h2M17 17h2"/>',
+    checks: '<path d="M9 3h6M10 3v6L5 19a1.5 1.5 0 0 0 1.3 2h11.4a1.5 1.5 0 0 0 1.3-2L14 9V3M7.5 15h9"/>',
+    inspector: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4"/>',
+    review: '<circle cx="12" cy="8" r="3.5"/><path d="M5 21c.5-4 3.3-6 7-6s6.5 2 7 6"/>',
+    shipped: '<path d="M3 7h11v9H3zM14 10h4l3 3v3h-7M7 19a2 2 0 1 0 0-.01M17 19a2 2 0 1 0 0-.01"/>',
+  };
+  const STATIONS = [
+    { id: "inbox", who: "People", name: "Requests", one: "Someone writes down what they need.",
+      what: "Anyone on the team writes down what they need, the way you'd fill in a ticket at a repair shop: what's wrong or missing, and what “done” looks like.",
+      why: "Clear, written requests are the raw material. The better the request, the less anyone has to explain later.",
+      real: "A GitHub issue in the project." },
+    { id: "triage", who: "AI", name: "Triage desk", one: "Clear? Vague? Sensitive?",
+      what: "A quick, inexpensive AI reads every new request. Clear ones get a short work plan. Vague ones go back to the requester with a few questions. Sensitive ones, like anything touching passwords or payments, are handed to a person instead.",
+      why: "Most wasted work comes from building the wrong thing. Sorting requests up front is cheap and saves the expensive steps for work that's ready.",
+      real: "The triage stage: a small model labels the issue “ready”, “needs spec” or “blocked” and comments with a plan." },
+    { id: "gate", who: "Automatic", name: "Front gate", one: "On the list? Budget left?",
+      what: "Before any building starts, the gate checks two things. Is the request from someone on the trusted list? Is there money left in this month's budget? If either answer is no, the work waits here.",
+      why: "It stops strangers from spending your money or slipping hidden instructions to the AI, and makes sure costs can never run away.",
+      real: "Repo allowlist, issue-author trust check, and a hard monthly spending limit in factory.yaml." },
+    { id: "workshop", who: "AI", name: "AI workshop", one: "Builds it in a sealed room.",
+      what: "An AI builder makes the change inside a sealed room that's thrown away afterwards. It only has the tools it has been allowed, and it holds no keys to the rest of the factory.",
+      why: "The AI can work unattended, around the clock, without anyone watching each step, and a mistake inside the room can't spread outside it.",
+      real: "Claude Code running in a disposable GitHub Actions machine with a scoped tool list." },
+    { id: "checks", who: "Automatic", name: "Quality checks", one: "Same tests a person's work must pass.",
+      what: "The finished work goes through the same automatic tests that a human developer's work must pass. If a test fails, the work goes back to the workshop to be fixed and tried again.",
+      why: "The AI is held to the same bar as people. Nothing is trusted just because it looks right.",
+      real: "The project's own CI: tests, code-style checks and the benchmark." },
+    { id: "inspector", who: "Automatic", name: "Safety inspector", one: "Rejects off-limits changes.",
+      what: "The inspector looks at which parts of the app the work touched. If it went anywhere off-limits, such as password storage or production servers, the work is rejected automatically, no matter how good it is.",
+      why: "Some areas are too important to leave to an AI. This rule is enforced by the factory itself, not just requested politely.",
+      real: "Protected-path policy: violating pull requests are closed and their branch deleted." },
+    { id: "review", who: "Person", name: "Human review", one: "A person approves it.", human: true,
+      what: "A person looks over the finished, tested work and approves it, or asks for changes. This is where most of the people-time goes, and it's the number a good factory keeps shrinking.",
+      why: "People stay in charge of what ships. The factory's job is to hand them work that's quick to say yes to.",
+      real: "Pull request review by a maintainer." },
+    { id: "shipped", who: "Done", name: "Shipped", one: "Live, and logged.",
+      what: "The change goes live. Its whole story (the request, what the AI did, how long people spent and what it cost) is written into the factory's logbook.",
+      why: "Without the logbook, the factory can't learn. Every job becomes evidence for the weekly improvement.",
+      real: "Merged pull request, plus a session record saved to the factory's data branch." },
+  ];
+  const LOOP = [
+    { name: "Logbook", text: "Every job is recorded: what was asked, what the AI did, people-time and cost.",
+      real: "Session records on the factory-data branch." },
+    { name: "Grader", text: "Once a week an AI grader scores the jobs against a list of common mistakes.",
+      real: "The daily/weekly evaluation stage and its failure-mode rubric." },
+    { name: "Better instructions", text: "An AI proposes one fix to the instruction book, aimed at the most common mistake.",
+      real: "The self-improvement agent edits the factory's prompts." },
+    { name: "Person approves", text: "A person reviews the change. Then every future job uses the better instructions.",
+      real: "A pull request against the factory itself, which only a person can merge." },
+  ];
+  const TITLES = {
+    clear: ["Add a dark-mode switch", "Fix the typo on the pricing page", "Export the report as a spreadsheet", "Show the date on every invoice",
+            "Add a “copy link” button", "Sort the customer list by name", "Make the search box remember my last search", "Add a print button to receipts",
+            "Show a warning before deleting a project", "Translate the menu into Indonesian"],
+    vague: ["Make the app faster", "Improve the dashboard", "Fix the login thing", "Make it look nicer"],
+    risky: ["Change how passwords are stored", "Update the payment server settings", "Give admins access to all accounts"],
+    stranger: ["Add a link to my website (outside visitor)", "Please change the homepage text (unknown sender)"],
+  };
+  const FIX = {
+    firstTry: { what: "checks failed the first time", fix: "“Run every check yourself before handing the work in.”" },
+    changes: { what: "the reviewer asked for changes", fix: "“Keep each change small, and explain what you did and why.”" },
+    offlimits: { what: "the work wandered into off-limits areas", fix: "“Never touch the password or server folders. Stop and ask instead.”" },
+  };
+
+  // ───────────────────────── tuning ─────────────────────────
+  const DWELL = [1.2, 1.7, 1.0, 3.4, 1.7, 1.1, 2.4, 2.6]; // seconds at 1× per station
+  const WEEK = 26, DAYS = 5, BUDGET = 40, FEED_EVERY = 3.1;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ───────────────────────── state ─────────────────────────
+  let S, tokens = [], nextId = 1, running = !reduce, speed = 1, last = 0, focusId = null, selected = { kind: "station", id: "workshop" };
+  const fresh = () => ({
+    t: 0, week: 1, feedT: 1.5, skill: 0.35, version: 1, budget: BUDGET,
+    shipped: 0, sentBack: 0, toPerson: 0, gateStopped: 0, rejected: 0, retries: 0, built: 0, minutesTotal: 0,
+    wk: { shipped: 0, minutes: 0, quality: [], firstTry: 0, changes: 0, offlimits: 0 },
+    history: [], quality: null, loopPhase: -1, loopT: 0, loopMsg: null,
+  });
+
+  // ───────────────────────── DOM build ─────────────────────────
+  const $ = (s) => document.querySelector(s);
+  const floor = $("#floor"), layer = $("#tokens");
+  STATIONS.forEach((st, i) => {
+    const b = document.createElement("div");
+    b.className = "station" + (st.human ? " human" : "");
+    b.id = "st-" + st.id; b.tabIndex = 0; b.setAttribute("role", "button");
+    b.setAttribute("aria-label", `${st.name}: ${st.one} Show details.`);
+    b.innerHTML = `<div class="num">${String(i + 1).padStart(2, "0")} · ${st.who === "Person" || st.who === "People" ? `<span class="tag-person">${st.who}</span>` : st.who}</div>
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[st.id]}</svg>
+      <div><h3>${st.name}</h3><p class="one">${st.one}</p></div>
+      <div><div class="bay" data-bay="${i}"></div><div class="tally" id="tally-${st.id}"></div></div>`;
+    const pick = () => { selected = { kind: "station", id: st.id }; focusId = null; renderDetail(); };
+    b.addEventListener("click", pick);
+    b.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+    floor.appendChild(b);
+  });
+
+  const loopEl = $("#loop");
+  LOOP.forEach((l, i) => {
+    const b = document.createElement("button");
+    b.className = "loop-step"; b.id = "loop-" + i;
+    b.innerHTML = `<span class="n">${i + 1}</span><b>${l.name}</b><span>${l.text}</span>`;
+    b.addEventListener("click", () => { selected = { kind: "loop", id: i }; focusId = null; renderDetail(); });
+    loopEl.appendChild(b);
+  });
+
+  // ───────────────────────── helpers ─────────────────────────
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const pickOne = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const fmtWhen = () => `Wk ${S.week}`;
+  function log(html) {
+    const li = document.createElement("li");
+    li.innerHTML = `<span class="when">${fmtWhen()}</span><span>${html}</span>`;
+    const ul = $("#log"); ul.prepend(li);
+    while (ul.children.length > 40) ul.lastChild.remove();
+  }
+  const esc = (s) => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const label = (tk) => `<b>#${tk.id}</b> “${esc(tk.title)}”`;
+  function pulse(i) { const el = floor.children[i]; el.classList.remove("pulse"); void el.offsetWidth; el.classList.add("pulse"); }
+
+  // ───────────────────────── tokens ─────────────────────────
+  function addRequest(type) {
+    type = type || weighted();
+    const tk = { id: nextId++, type, title: pickOne(TITLES[type]), stage: 0, timer: DWELL[0], attempts: 0, mins: 0,
+                 state: "move", journey: [], fails: 0, offlimits: false, changes: false, cost: 0, flag: null };
+    const el = document.createElement("button");
+    el.className = `token t-${type}`; el.textContent = "#" + tk.id;
+    el.setAttribute("aria-label", `Work order ${tk.id}: ${tk.title}`);
+    el.addEventListener("click", (e) => { e.stopPropagation(); focusId = tk.id; selected = { kind: "token", id: tk.id }; renderDetail(); markFocus(); });
+    tk.el = el; el.style.transition = "none"; layer.appendChild(el);
+    tokens.push(tk);
+    step(tk, `Request ${label(tk)} arrived.`);
+    log(`New request ${label(tk)}${type === "stranger" ? " from someone outside the team." : "."}`);
+    layout(); void el.offsetWidth; el.style.transition = ""; updateTallies();
+  }
+  function weighted() { const r = Math.random(); return r < .6 ? "clear" : r < .75 ? "vague" : r < .85 ? "risky" : "stranger"; }
+  function step(tk, text) { tk.journey.push(text); if (selected.kind === "token" && selected.id === tk.id) renderDetail(); }
+  function setFlag(tk, txt, color) {
+    tk.el.querySelector(".flag")?.remove();
+    if (!txt) return;
+    const f = document.createElement("span"); f.className = "flag"; f.textContent = txt; f.style.background = color;
+    tk.el.appendChild(f);
+  }
+  function moveTo(tk, stage) { tk.stage = stage; tk.timer = DWELL[stage] * rnd(.8, 1.25); pulse(stage); layout(); }
+  function exitToken(tk, flagTxt, color) {
+    tk.state = "exit"; tk.timer = 2.6; setFlag(tk, flagTxt, color); layout();
+  }
+
+  function advance(tk) {
+    const st = tk.stage;
+    if (tk.state === "exit") { tk.el.classList.add("out"); setTimeout(() => tk.el.remove(), 600); tokens = tokens.filter(x => x !== tk); layout(); return; }
+    if (tk.state === "clarify") { // requester answered the triage questions
+      tk.state = "move"; tk.type = "clear"; tk.el.className = "token t-clear"; tk.el.textContent = "#" + tk.id; tk.title += " (clarified)";
+      step(tk, "The requester answered the questions and resubmitted."); log(`${label(tk)} came back with answers. Back on the line.`);
+      moveTo(tk, 1); return;
+    }
+    switch (st) {
+      case 0: moveTo(tk, 1); break;
+      case 1: // triage
+        if (tk.type === "vague") {
+          S.sentBack++; tk.state = "clarify"; tk.timer = 5; tk.stage = 0; setFlag(tk, "?", "var(--warn)"); layout();
+          step(tk, "Triage: too vague. Sent back with three questions.");
+          log(`<span class="meh">Sent back:</span> ${label(tk)} is too vague. The requester gets a few questions.`); break;
+        }
+        if (tk.type === "risky") {
+          S.toPerson++; exitToken(tk, "✋", "var(--stop)");
+          step(tk, "Triage: sensitive (passwords / payments). Handed to a person, not the AI.");
+          log(`<span class="bad">Handed to a person:</span> ${label(tk)} is too sensitive for the AI.`); break;
+        }
+        step(tk, "Triage: clear. Wrote a short work plan."); moveTo(tk, 2); break;
+      case 2: // gate
+        if (tk.type === "stranger") {
+          S.gateStopped++; exitToken(tk, "✕", "#7C68C8");
+          step(tk, "Gate: the requester isn't on the trusted list. Stopped.");
+          log(`<span class="bad">Stopped at the gate:</span> ${label(tk)} came from outside the team.`); break;
+        }
+        if (S.budget <= 0) {
+          if (tk.state !== "wait") { tk.state = "wait"; setFlag(tk, "$", "var(--warn)"); step(tk, "Gate: this month's budget is used up. Waiting for next month.");
+            log(`<span class="meh">On hold:</span> the monthly budget is used up, so ${label(tk)} waits at the gate.`); }
+          tk.timer = .5; break;
+        }
+        if (tk.state === "wait") { tk.state = "move"; setFlag(tk, null); }
+        step(tk, "Gate: trusted requester, budget available. Let through."); moveTo(tk, 3); break;
+      case 3: { // workshop
+        tk.attempts++; S.built += tk.attempts === 1 ? 1 : 0;
+        const c = +(rnd(1.6, 2.6) * (1 - .35 * S.skill)).toFixed(2); tk.cost += c; S.budget = +(S.budget - c).toFixed(2);
+        const failP = Math.max(.04, .55 * (1 - S.skill));
+        tk.failNow = Math.random() < (tk.attempts === 1 ? failP : failP * .45);
+        if (tk.attempts === 1) tk.offlimits = Math.random() < Math.max(.02, .16 * (1 - S.skill));
+        setFlag(tk, null);
+        step(tk, tk.attempts === 1 ? `Workshop: the AI built the change (cost $${c.toFixed(2)}).` : `Workshop: the AI fixed the failing check (cost $${c.toFixed(2)}).`);
+        moveTo(tk, 4); break; }
+      case 4: // checks
+        if (tk.failNow) {
+          tk.fails++; S.retries++; if (tk.fails === 1) S.wk.firstTry++;
+          if (tk.attempts >= 3) {
+            S.toPerson++; exitToken(tk, "✋", "var(--warn)");
+            step(tk, "Checks: still failing after three tries. The AI stopped and asked a person for help.");
+            log(`<span class="meh">Asked for help:</span> ${label(tk)} kept failing its checks, so the AI handed it to a person.`); break;
+          }
+          setFlag(tk, "↺", "var(--warn)");
+          step(tk, "Checks: a test failed. Back to the workshop to fix it.");
+          log(`<span class="meh">Check failed:</span> ${label(tk)} goes back to the AI to fix.`); moveTo(tk, 3); break;
+        }
+        step(tk, "Checks: all tests passed."); moveTo(tk, 5); break;
+      case 5: // inspector
+        if (tk.offlimits) {
+          S.rejected++; S.wk.offlimits++; exitToken(tk, "⛔", "var(--stop)");
+          step(tk, "Inspector: the work touched an off-limits area. Rejected automatically.");
+          log(`<span class="bad">Rejected by the inspector:</span> ${label(tk)} touched an off-limits area. It never reached a person.`); break;
+        }
+        step(tk, "Inspector: nothing off-limits was touched."); moveTo(tk, 6); break;
+      case 6: { // review
+        const base = 4 + 22 * (1 - S.skill) + rnd(0, 4) + tk.fails * 1.5;
+        if (!tk.changes && Math.random() < .42 * (1 - S.skill)) {
+          tk.changes = true; S.wk.changes++; const m = Math.round(base * .6); tk.mins += m;
+          setFlag(tk, "✎", "var(--warn)");
+          step(tk, `Review: the person asked for changes (${m} min). Back to the workshop.`);
+          log(`<span class="meh">Changes requested:</span> the reviewer spent ${m} min on ${label(tk)} and asked for a fix.`);
+          tk.failNow = false; tk.attempts = Math.min(tk.attempts, 2); moveTo(tk, 3); break;
+        }
+        const m = Math.round(base * (tk.changes ? .5 : 1)); tk.mins += m;
+        step(tk, `Review: approved by a person (${m} min).`); setFlag(tk, null); moveTo(tk, 7); break; }
+      case 7: { // shipped
+        S.shipped++; S.minutesTotal += tk.mins; S.wk.shipped++; S.wk.minutes += tk.mins;
+        const q = Math.max(1, Math.min(5, 3 + 2 * S.skill + rnd(-.4, .5) - tk.fails * .5 - (tk.changes ? .7 : 0)));
+        S.wk.quality.push(q);
+        step(tk, `Shipped. Logbook: ${tk.mins} min of people-time, $${tk.cost.toFixed(2)} of AI time.`);
+        log(`<span class="good">Shipped:</span> ${label(tk)}. People spent ${tk.mins} min in total.`);
+        exitToken(tk, "✓", "var(--ok)"); break; }
+    }
+    updateTallies();
+  }
+
+  // ───────────────────────── layout ─────────────────────────
+  function layout() {
+    const base = floor.getBoundingClientRect();
+    const groups = {};
+    tokens.forEach(tk => (groups[tk.stage] ||= []).push(tk));
+    Object.entries(groups).forEach(([stage, list]) => {
+      const bay = floor.querySelector(`[data-bay="${stage}"]`).getBoundingClientRect();
+      const perRow = Math.max(1, Math.floor((bay.width - 4) / 52));
+      list.sort((a, b) => a.id - b.id).forEach((tk, i) => {
+        const row = Math.floor(i / perRow), col = i % perRow;
+        const x = bay.left - base.left + 2 + col * 52;
+        const y = bay.top - base.top + 10 + Math.min(row, 2) * 30 + (row > 2 ? (row - 2) * 4 : 0);
+        tk.el.style.transform = `translate(${x}px, ${y}px)`;
+        tk.el.classList.toggle("working", tk.stage === 3 && tk.state === "move");
+      });
+    });
+  }
+  addEventListener("resize", layout);
+  function markFocus() { tokens.forEach(tk => tk.el.classList.toggle("focus", tk.id === focusId)); }
+
+  // ───────────────────────── weekly loop ─────────────────────────
+  function endOfWeek() {
+    const w = S.wk;
+    const avgM = w.shipped ? w.minutes / w.shipped : null;
+    const avgQ = w.quality.length ? w.quality.reduce((a, b) => a + b, 0) / w.quality.length : null;
+    S.history.push({ week: S.week, mins: avgM, q: avgQ, shipped: w.shipped });
+    if (avgQ != null) S.quality = avgQ;
+    const issues = [["firstTry", w.firstTry], ["changes", w.changes], ["offlimits", w.offlimits * 2]].sort((a, b) => b[1] - a[1]);
+    const top = issues[0][1] > 0 && w.shipped + w.offlimits > 0 ? issues[0][0] : null;
+    S.loopPhase = 0; S.loopT = 0;
+    S.loopMsg = top
+      ? { top, text: `Week ${S.week}: ${w.shipped} shipped. The most common problem: ${FIX[top].what}.` }
+      : { top: null, text: `Week ${S.week}: ${w.shipped} shipped, no common problem stood out.` };
+    log(`<b>Week ${S.week} report:</b> ${w.shipped} shipped${avgM != null ? `, ${Math.round(avgM)} min of people-time each` : ""}. The weekly review starts.`);
+    S.week++; S.wk = { shipped: 0, minutes: 0, quality: [], firstTry: 0, changes: 0, offlimits: 0 };
+    if ((S.week - 1) % 4 === 0) { S.budget = BUDGET; log("A new month starts. The budget is topped up to $" + BUDGET + "."); }
+    drawChart();
+  }
+  function tickLoop(dt) {
+    if (S.loopPhase < 0) return;
+    S.loopT += dt;
+    const phaseLen = 1.6;
+    const phase = Math.min(3, Math.floor(S.loopT / phaseLen));
+    if (phase !== S.loopPhase) {
+      S.loopPhase = phase;
+      const m = S.loopMsg;
+      if (phase === 1) setLoopStatus(m.text);
+      if (phase === 2) setLoopStatus(m.top ? `Proposed fix to the instruction book: ${FIX[m.top].fix}` : "No fix needed this week, so the instruction book stays as it is.");
+      if (phase === 3) {
+        if (m.top) {
+          S.version++; const before = S.skill; S.skill = Math.min(.92, S.skill + (.92 - S.skill) * .24);
+          setLoopStatus(`A person reviewed and approved the fix. Instruction book v${S.version} is now in use: first-time success went from ${Math.round(before * 100)}% to ${Math.round(S.skill * 100)}%.`);
+          log(`<span class="good">Factory improved:</span> instruction book v${S.version} approved. Fix: ${FIX[m.top].fix}`);
+        } else setLoopStatus("Nothing to approve this week.");
+      }
+    }
+    LOOP.forEach((_, i) => $("#loop-" + i).classList.toggle("active", i === S.loopPhase));
+    if (S.loopT > phaseLen * 4.2) { S.loopPhase = -1; LOOP.forEach((_, i) => $("#loop-" + i).classList.remove("active")); }
+    renderBook();
+  }
+  function setLoopStatus(t) { $("#loop-status").textContent = t; }
+  function renderBook() {
+    $("#book-ver").textContent = "v" + S.version;
+    $("#skill-pct").textContent = Math.round(S.skill * 100) + "%";
+    $("#skill-bar").style.width = Math.round(S.skill * 100) + "%";
+  }
+
+  // ───────────────────────── chart ─────────────────────────
+  function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+  function drawChart() {
+    const cv = $("#chart"), dpr = devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+    cv.width = W * dpr; cv.height = H * dpr; const g = cv.getContext("2d"); g.scale(dpr, dpr); g.clearRect(0, 0, W, H);
+    const pts = S.history.filter(h => h.mins != null);
+    const ink = cssVar("--ink"), muted = cssVar("--muted"), rule = cssVar("--rule"), sig = cssVar("--signal");
+    const L = 34, R = 8, T = 10, B = 22, max = 40;
+    g.font = "12px " + cssVar("--body"); g.fillStyle = muted; g.strokeStyle = rule; g.lineWidth = 1;
+    [0, 10, 20, 30, 40].forEach(v => { const y = T + (H - T - B) * (1 - v / max); g.beginPath(); g.moveTo(L, y); g.lineTo(W - R, y); g.stroke(); g.fillText(v, 6, y + 4); });
+    if (!pts.length) { g.fillStyle = muted; g.fillText("The first bar appears when week 1 ends.", L + 8, T + 24); return; }
+    const n = Math.max(pts.length, 6), bw = (W - L - R) / n;
+    pts.forEach((p, i) => {
+      const v = Math.min(max, p.mins), h = (H - T - B) * v / max, x = L + i * bw + bw * .18, y = H - B - h;
+      g.fillStyle = i === pts.length - 1 ? sig : ink; g.globalAlpha = i === pts.length - 1 ? 1 : .55;
+      g.fillRect(x, y, bw * .64, h); g.globalAlpha = 1;
+      g.fillStyle = muted; g.fillText("W" + p.week, x, H - 6);
+      if (i === pts.length - 1) { g.fillStyle = ink; g.font = "700 12px " + cssVar("--body"); g.fillText(Math.round(p.mins) + " min", x, y - 4); g.font = "12px " + cssVar("--body"); }
+    });
+  }
+  addEventListener("resize", drawChart);
+  matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", drawChart);
+
+  // ───────────────────────── board + tallies ─────────────────────────
+  function updateBoard() {
+    $("#s-week").textContent = S.week;
+    $("#s-weekprog").textContent = `day ${Math.min(DAYS, Math.floor((S.t % WEEK) / WEEK * DAYS) + 1)} of ${DAYS}`;
+    $("#s-shipped").textContent = S.shipped;
+    $("#s-inflight").textContent = `${tokens.filter(t => t.state !== "exit").length} on the line`;
+    const last = [...S.history].reverse().find(h => h.mins != null);
+    $("#s-mins").textContent = S.shipped ? Math.round(last ? last.mins : S.minutesTotal / S.shipped) : "–";
+    $("#s-quality").textContent = S.quality != null ? S.quality.toFixed(1) : "–";
+    const caught = S.gateStopped + S.rejected + S.toPerson;
+    $("#s-caught").textContent = caught;
+    $("#s-caughtdetail").textContent = `${S.gateStopped} at the gate · ${S.rejected} by the inspector · ${S.toPerson} to a person`;
+    const b = Math.max(0, S.budget);
+    $("#s-budget").textContent = "$" + Math.round(b);
+    const bar = $("#s-budgetbar"); bar.style.width = (b / BUDGET * 100) + "%";
+    bar.className = b <= 0 ? "empty" : b < BUDGET * .25 ? "low" : "";
+  }
+  function updateTallies() {
+    const set = (id, html) => { $("#tally-" + id).innerHTML = html; };
+    set("inbox", `<b>${nextId - 1}</b> received`);
+    set("triage", `<b>${S.sentBack}</b> sent back · <b>${S.toPerson}</b> to a person`);
+    set("gate", `<b>${S.gateStopped}</b> stopped${S.budget <= 0 ? " · <b>budget used up</b>" : ""}`);
+    set("workshop", `<b>${S.built}</b> built`);
+    set("checks", `<b>${S.retries}</b> sent back to fix`);
+    set("inspector", `<b>${S.rejected}</b> rejected`);
+    set("review", `<b>${S.minutesTotal}</b> min of people-time`);
+    set("shipped", `<b>${S.shipped}</b> shipped`);
+    updateBoard();
+  }
+
+  // ───────────────────────── detail panel ─────────────────────────
+  function renderDetail() {
+    const d = $("#detail");
+    document.querySelectorAll(".station").forEach(el => el.classList.toggle("selected", selected.kind === "station" && el.id === "st-" + selected.id));
+    if (selected.kind === "station") {
+      const st = STATIONS.find(s => s.id === selected.id), i = STATIONS.indexOf(st);
+      d.innerHTML = `<h2>${String(i + 1).padStart(2, "0")} · ${st.name}</h2><p class="sub">${{ People: "Done by people.", Person: "Done by a person.", AI: "Done by an AI.", Automatic: "Done automatically, by fixed rules.", Done: "The end of the line." }[st.who]}</p>
+        <p>${st.what}</p><p><b>Why it matters:</b> ${st.why}</p>
+        <div class="real"><b>In the real system</b>${st.real}</div>`;
+    } else if (selected.kind === "loop") {
+      const l = LOOP[selected.id];
+      d.innerHTML = `<h2>Loop step ${selected.id + 1} · ${l.name}</h2><p class="sub">Part of the weekly self-improvement loop.</p>
+        <p>${l.text}</p><p><b>Why it matters:</b> A normal tool stays as good as the day it was set up. The loop means each week's mistakes make next week's work better, with a person signing off on every change to the rules.</p>
+        <div class="real"><b>In the real system</b>${l.real}</div>`;
+    } else {
+      const tk = tokens.find(t => t.id === selected.id);
+      if (!tk) { d.innerHTML = `<h2>Work order #${selected.id}</h2><p>This work order has left the floor. Its full story is in the logbook, and in the list below.</p>`; return; }
+      const kind = { clear: "a clear request", vague: "a vague request", risky: "a sensitive request", stranger: "a request from outside the team" }[tk.type];
+      d.innerHTML = `<h2>Work order #${tk.id}</h2><p class="sub">“${esc(tk.title)}”, ${kind}. Now at: <b>${STATIONS[tk.stage].name}</b>.</p>
+        <p><b>Its journey so far:</b></p><ol>${tk.journey.map(j => `<li>${esc(j)}</li>`).join("")}</ol>
+        <div class="real"><b>So far</b>${tk.mins} min of people-time · $${tk.cost.toFixed(2)} of AI time · ${Math.max(0, tk.attempts)} build attempt${tk.attempts === 1 ? "" : "s"}</div>`;
+    }
+  }
+
+  // ───────────────────────── main loop ─────────────────────────
+  function frame(now) {
+    const dt = last ? Math.min(.1, (now - last) / 1000) * speed : 0; last = now;
+    if (running && dt > 0) {
+      S.t += dt;
+      if ($("#auto").checked) { S.feedT -= dt; if (S.feedT <= 0) { S.feedT = FEED_EVERY * rnd(.6, 1.4); if (tokens.length < 14) addRequest(); } }
+      [...tokens].forEach(tk => { tk.timer -= dt; if (tk.timer <= 0) advance(tk); });
+      if (S.t >= S.week * WEEK) endOfWeek();
+      tickLoop(dt);
+      updateBoard();
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // ───────────────────────── controls ─────────────────────────
+  const runBtn = $("#run");
+  function setRunning(v) {
+    running = v; runBtn.textContent = v ? "Pause" : "Start the line"; runBtn.setAttribute("aria-pressed", String(v));
+    document.body.classList.toggle("running", v);
+  }
+  runBtn.addEventListener("click", () => setRunning(!running));
+  document.querySelectorAll("[data-send]").forEach(b => b.addEventListener("click", () => { addRequest(b.dataset.send); if (!running) setRunning(true); }));
+  document.querySelectorAll("[data-speed]").forEach(b => b.addEventListener("click", () => {
+    speed = +b.dataset.speed;
+    document.querySelectorAll("[data-speed]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  }));
+  $("#reset").addEventListener("click", () => boot({}));
+
+  function boot(data) {
+    tokens.forEach(t => t.el.remove()); tokens = []; nextId = 1; focusId = null;
+    S = Object.assign(fresh(), data && data.S ? data.S : {});
+    if (data && data.nextId) nextId = data.nextId;
+    $("#log").innerHTML = ""; setLoopStatus(S.history.length ? "The next weekly review starts at the end of this week." : "Waiting for the first week to finish…");
+    selected = { kind: "station", id: "workshop" };
+    renderDetail(); renderBook(); drawChart(); updateTallies();
+    log("The factory opens. Requests will start arriving. Try sending your own with the buttons above.");
+    if (!S.history.length) { addRequest("clear"); addRequest("vague"); }
+    setRunning(!reduce);
+  }
+  window.claude?.hot?.snapshot?.(() => ({ S, nextId }));
+  const start = (d) => { boot(d || {}); requestAnimationFrame(frame); };
+  window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+})();
+</script>
+</body>
+</html>
