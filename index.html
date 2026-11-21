@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Inside a Software Factory</title>
+<meta name="description" content="An interactive explainer of what a software factory does, in English and Bahasa Indonesia.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
@@ -87,15 +88,17 @@ label.auto input { width: 18px; height: 18px; accent-color: var(--signal); }
 .running .floor::before { animation: belt 1.1s linear infinite; }
 @keyframes belt { to { background-position: 22px 0; } }
 .station { position: relative; z-index: 1; background: var(--panel); border: 1.5px solid var(--rule); border-radius: 8px; padding: 12px 12px 10px; display: grid; grid-template-rows: auto auto 1fr auto; gap: 6px; cursor: pointer; min-height: 250px; text-align: left; transition: border-color .2s, box-shadow .2s; }
+.station { grid-template-columns: minmax(0, 1fr); min-width: 0; }
+.station > * { min-width: 0; }
 .station:hover { border-color: var(--ink); }
 .station.selected { border-color: var(--signal); box-shadow: 0 0 0 2px var(--signal) inset; }
 .station.pulse { animation: pulse .6s ease; }
 @keyframes pulse { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--signal) 40%, transparent); } }
 .station .num { font: 800 15px/1 var(--display); color: var(--muted); letter-spacing: .05em; }
 .station .icon { width: 38px; height: 38px; color: var(--ink); }
-.station h3 { margin: 0; font: 800 clamp(19px, 1.85vw, 24px)/1 var(--display); text-transform: uppercase; letter-spacing: .01em; overflow-wrap: anywhere; hyphens: auto; }
+.station h3 { margin: 0; font: 800 clamp(19px, 1.85vw, 24px)/1 var(--display); text-transform: uppercase; letter-spacing: .01em; overflow-wrap: normal; word-break: normal; }
 .station .one { margin: 0; font-size: 14px; line-height: 1.35; color: var(--muted); }
-.station .bay { min-height: 64px; border-top: 1.5px dashed var(--rule); margin-top: 4px; }
+.station .bay { min-height: 72px; border-top: 1.5px dashed var(--rule); margin-top: 4px; }
 .station .tally { font-size: 12.5px; color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; min-height: 1.4em; }
 .station .tally b { color: var(--ink); }
 .station.human { background: color-mix(in srgb, var(--signal) 9%, var(--panel)); }
@@ -172,51 +175,64 @@ footer { font-size: 13.5px; color: var(--muted); max-width: 80ch; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before { animation: none !important; transition: none !important; }
 }
+
+/* ── Language switch ── */
+.topline { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.lang { display: inline-flex; border: 1.5px solid var(--ink); border-radius: 6px; overflow: hidden; }
+.lang button { border: 0; border-radius: 0; padding: 8px 12px; font-size: 13.5px; background: var(--panel); }
+.lang button + button { border-left: 1.5px solid var(--ink); }
+.lang button[aria-pressed="true"] { background: var(--ink); color: var(--floor); }
 </style>
 </head>
 <body>
 <div class="wrap" id="app">
 
 <header>
-  <div class="eyebrow">Interactive explainer</div>
-  <h1>Inside a Software Factory</h1>
-  <p class="lede">A software factory is an assembly line for changes to an app. People write down what they need; AI workers build it inside sealed rooms; automatic checks and a human reviewer approve it. And once a week <em>the factory studies its own mistakes and improves its instructions.</em></p>
+  <div class="topline">
+    <div class="eyebrow" data-i18n="eyebrow">Interactive explainer</div>
+    <div class="lang" role="group" aria-label="Language / Bahasa">
+      <button data-lang="en" aria-pressed="true" lang="en">English</button>
+      <button data-lang="id" aria-pressed="false" lang="id">Bahasa Indonesia</button>
+    </div>
+  </div>
+  <h1 data-i18n="h1">Inside a Software Factory</h1>
+  <p class="lede" data-i18n="lede"></p>
 </header>
 
-<div class="controls" role="group" aria-label="Simulation controls">
+<div class="controls" role="group" data-i18n-aria="controlsAria">
   <button class="primary" id="run" aria-pressed="false">Pause</button>
-  <div class="send-group" aria-label="Send a request">
-    <span>Send a request:</span>
-    <button class="chip-btn" data-send="clear"><i class="dot t-clear"></i>Clear</button>
-    <button class="chip-btn" data-send="vague"><i class="dot t-vague"></i>Vague</button>
-    <button class="chip-btn" data-send="risky"><i class="dot t-risky"></i>Sensitive</button>
-    <button class="chip-btn" data-send="stranger"><i class="dot t-stranger"></i>From a stranger</button>
+  <div class="send-group">
+    <span data-i18n="send">Send a request:</span>
+    <button class="chip-btn" data-send="clear"><i class="dot t-clear"></i><span data-i18n="tClear">Clear</span></button>
+    <button class="chip-btn" data-send="vague"><i class="dot t-vague"></i><span data-i18n="tVague">Vague</span></button>
+    <button class="chip-btn" data-send="risky"><i class="dot t-risky"></i><span data-i18n="tRisky">Sensitive</span></button>
+    <button class="chip-btn" data-send="stranger"><i class="dot t-stranger"></i><span data-i18n="tStranger">From a stranger</span></button>
   </div>
-  <label class="auto"><input type="checkbox" id="auto" checked> Keep requests coming</label>
-  <div class="speed" role="group" aria-label="Speed">
-    <span>Speed</span>
+  <label class="auto"><input type="checkbox" id="auto" checked> <span data-i18n="auto">Keep requests coming</span></label>
+  <div class="speed" role="group">
+    <span data-i18n="speed">Speed</span>
     <button class="chip-btn" data-speed="1" aria-pressed="true">1×</button>
     <button class="chip-btn" data-speed="2" aria-pressed="false">2×</button>
     <button class="chip-btn" data-speed="4" aria-pressed="false">4×</button>
-    <button class="chip-btn" id="reset">Start over</button>
+    <button class="chip-btn" id="reset" data-i18n="reset">Start over</button>
   </div>
 </div>
 
-<section class="board" aria-label="Factory report card">
-  <div class="stat"><span class="k">Week</span><span class="v" id="s-week">1</span><span class="s" id="s-weekprog">day 1 of 5</span></div>
-  <div class="stat"><span class="k">Changes shipped</span><span class="v" id="s-shipped">0</span><span class="s" id="s-inflight">0 on the line</span></div>
-  <div class="stat hero"><span class="k">People-time per change</span><span class="v" id="s-mins">–</span><span class="s">minutes · by hand ≈ 120</span></div>
-  <div class="stat"><span class="k">Quality score</span><span class="v" id="s-quality">–</span><span class="s">out of 5, graded weekly</span></div>
-  <div class="stat"><span class="k">Caught &amp; stopped</span><span class="v" id="s-caught">0</span><span class="s" id="s-caughtdetail">before reaching anyone</span></div>
-  <div class="stat"><span class="k">Budget left this month</span><span class="v" id="s-budget">$40</span><div class="budget-bar"><i id="s-budgetbar"></i></div></div>
+<section class="board" data-i18n-aria="boardAria">
+  <div class="stat"><span class="k" data-i18n="bWeek">Week</span><span class="v" id="s-week">1</span><span class="s" id="s-weekprog"></span></div>
+  <div class="stat"><span class="k" data-i18n="bShipped">Changes shipped</span><span class="v" id="s-shipped">0</span><span class="s" id="s-inflight"></span></div>
+  <div class="stat hero"><span class="k" data-i18n="bMins">People-time per change</span><span class="v" id="s-mins">–</span><span class="s" data-i18n="bMinsSub">minutes · by hand ≈ 120</span></div>
+  <div class="stat"><span class="k" data-i18n="bQuality">Quality score</span><span class="v" id="s-quality">–</span><span class="s" data-i18n="bQualitySub">out of 5, graded weekly</span></div>
+  <div class="stat"><span class="k" data-i18n="bCaught">Caught &amp; stopped</span><span class="v" id="s-caught">0</span><span class="s" id="s-caughtdetail"></span></div>
+  <div class="stat"><span class="k" data-i18n="bBudget">Budget left this month</span><span class="v" id="s-budget">$40</span><div class="budget-bar"><i id="s-budgetbar"></i></div></div>
 </section>
 
-<div class="legend" aria-label="Kinds of request">
-  <span><i class="dot t-clear"></i>Clear request</span>
-  <span><i class="dot t-vague"></i>Vague request</span>
-  <span><i class="dot t-risky"></i>Sensitive request (passwords, payments)</span>
-  <span><i class="dot t-stranger"></i>Request from someone outside the team</span>
-  <span>Click a station or any work order to learn more.</span>
+<div class="legend">
+  <span><i class="dot t-clear"></i><span data-i18n="lgClear">Clear request</span></span>
+  <span><i class="dot t-vague"></i><span data-i18n="lgVague">Vague request</span></span>
+  <span><i class="dot t-risky"></i><span data-i18n="lgRisky">Sensitive request</span></span>
+  <span><i class="dot t-stranger"></i><span data-i18n="lgStranger">Request from outside the team</span></span>
+  <span data-i18n="lgHint">Click a station or any work order to learn more.</span>
 </div>
 
 <div class="floor-wrap">
@@ -228,31 +244,318 @@ footer { font-size: 13.5px; color: var(--muted); max-width: 80ch; }
   <section class="card" id="detail" aria-live="polite"></section>
 
   <section class="card">
-    <h2>The self-improvement loop</h2>
-    <p class="sub">This is what turns an assembly line into a factory that gets better on its own.</p>
+    <h2 data-i18n="loopTitle">The self-improvement loop</h2>
+    <p class="sub" data-i18n="loopSub"></p>
     <div class="loop" id="loop"></div>
-    <p class="loop-status" id="loop-status">Waiting for the first week to finish…</p>
+    <p class="loop-status" id="loop-status"></p>
     <div class="book">
-      <div><div class="ver" id="book-ver">v1</div><div class="lbl">Instruction<br>book</div></div>
-      <div class="skill"><div class="lbl" style="margin-bottom:6px">How often the AI gets it right first time: <b id="skill-pct">35%</b></div><div class="bar"><i id="skill-bar"></i></div></div>
+      <div><div class="ver" id="book-ver">v1</div><div class="lbl" data-i18n="book">Instruction<br>book</div></div>
+      <div class="skill"><div class="lbl" style="margin-bottom:6px"><span data-i18n="skill">How often the AI gets it right first time:</span> <b id="skill-pct">35%</b></div><div class="bar"><i id="skill-bar"></i></div></div>
     </div>
-    <canvas id="chart" aria-label="Chart of people-time per shipped change by week" role="img"></canvas>
-    <p class="chart-cap">People-time per shipped change, week by week. Lower is better.</p>
+    <canvas id="chart" role="img"></canvas>
+    <p class="chart-cap" data-i18n="chartCap"></p>
   </section>
 </div>
 
 <section class="card">
-  <h2>What just happened</h2>
-  <p class="sub">A plain-language log of the factory floor, newest first.</p>
+  <h2 data-i18n="logTitle">What just happened</h2>
+  <p class="sub" data-i18n="logSub"></p>
   <ul class="log" id="log"></ul>
 </section>
 
-<footer>All numbers here are illustrative, made up to show how the parts fit together. In a real factory they come from the factory's logbook. Built on the same design as a real starter kit: requests are GitHub issues, the AI builder is Claude Code running in a disposable cloud machine, the checks are the project's own tests, and changes ship as reviewed pull requests.</footer>
+<footer data-i18n="footer"></footer>
 </div>
 
 <script>
 (() => {
-  // ───────────────────────── content ─────────────────────────
+  // ═════════════════════════ TRANSLATIONS ═════════════════════════
+  const I18N = {
+    en: {
+      title: "Inside a Software Factory",
+      ui: {
+        eyebrow: "Interactive explainer", h1: "Inside a Software Factory",
+        lede: "A software factory is an assembly line for changes to an app. People write down what they need; AI workers build it inside sealed rooms; automatic checks and a human reviewer approve it. And once a week <em>the factory studies its own mistakes and improves its instructions.</em>",
+        controlsAria: "Simulation controls", boardAria: "Factory report card",
+        send: "Send a request:", tClear: "Clear", tVague: "Vague", tRisky: "Sensitive", tStranger: "From a stranger",
+        auto: "Keep requests coming", speed: "Speed", reset: "Start over", pause: "Pause", start: "Start the line",
+        bWeek: "Week", bShipped: "Changes shipped", bMins: "People-time per change", bMinsSub: "minutes · by hand ≈ 120",
+        bQuality: "Quality score", bQualitySub: "out of 5, graded weekly", bCaught: "Caught &amp; stopped", bBudget: "Budget left this month",
+        lgClear: "Clear request", lgVague: "Vague request", lgRisky: "Sensitive request (passwords, payments)",
+        lgStranger: "Request from someone outside the team", lgHint: "Click a station or any work order to learn more.",
+        loopTitle: "The self-improvement loop", loopSub: "This is what turns an assembly line into a factory that gets better on its own.",
+        book: "Instruction<br>book", skill: "How often the AI gets it right first time:",
+        chartCap: "People-time per shipped change, week by week. Lower is better.",
+        logTitle: "What just happened", logSub: "A plain-language log of the factory floor, newest first.",
+        footer: "All numbers here are illustrative, made up to show how the parts fit together. In a real factory they come from the factory's logbook. Built on the same design as a real starter kit: requests are GitHub issues, the AI builder is Claude Code running in a disposable cloud machine, the checks are the project's own tests, and changes ship as reviewed pull requests.",
+      },
+      dayOf: (d, n) => `day ${d} of ${n}`, onLine: (n) => `${n} on the line`,
+      caught: (g, r, p) => `${g} at the gate · ${r} by the inspector · ${p} to a person`,
+      who: { People: "People", Person: "Person", AI: "AI", Automatic: "Automatic", Done: "" },
+      whoSub: { People: "Done by people.", Person: "Done by a person.", AI: "Done by an AI.", Automatic: "Done automatically, by fixed rules.", Done: "The end of the line." },
+      tally: {
+        inbox: (n) => `<b>${n}</b> received`, triage: (a, b) => `<b>${a}</b> sent back · <b>${b}</b> to a person`,
+        gate: (n, empty) => `<b>${n}</b> stopped${empty ? " · <b>budget used up</b>" : ""}`, workshop: (n) => `<b>${n}</b> built`,
+        checks: (n) => `<b>${n}</b> sent back to fix`, inspector: (n) => `<b>${n}</b> rejected`,
+        review: (n) => `<b>${n}</b> min of people-time`, shipped: (n) => `<b>${n}</b> shipped`,
+      },
+      stationAria: (name, one) => `${name}: ${one} Show details.`,
+      why: "Why it matters:", real: "In the real system",
+      loopStep: "Loop step", loopPart: "Part of the weekly self-improvement loop.",
+      loopWhy: "A normal tool stays as good as the day it was set up. The loop means each week's mistakes make next week's work better, with a person signing off on every change to the rules.",
+      order: "Work order", orderAria: (id, t) => `Work order ${id}: ${t}`,
+      orderGone: "This work order has left the floor. Its full story is in the logbook, and in the list below.",
+      kinds: { clear: "a clear request", vague: "a vague request", risky: "a sensitive request", stranger: "a request from outside the team" },
+      nowAt: "Now at:", journey: "Its journey so far:", soFar: "So far",
+      soFarLine: (m, c, a) => `${m} min of people-time · $${c} of AI time · ${a} build attempt${a === 1 ? "" : "s"}`,
+      when: "Wk", chartW: "W", min: "min", chartEmpty: "The first bar appears when week 1 ends.",
+      chartAria: "Chart of people-time per shipped change by week",
+      clarified: " (clarified)",
+      stations: {
+        inbox: { name: "Requests", one: "Someone writes down what they need.",
+          what: "Anyone on the team writes down what they need, the way you'd fill in a ticket at a repair shop: what's wrong or missing, and what “done” looks like.",
+          why: "Clear, written requests are the raw material. The better the request, the less anyone has to explain later.",
+          real: "A GitHub issue in the project." },
+        triage: { name: "Triage desk", one: "Clear? Vague? Sensitive?",
+          what: "A quick, inexpensive AI reads every new request. Clear ones get a short work plan. Vague ones go back to the requester with a few questions. Sensitive ones, like anything touching passwords or payments, are handed to a person instead.",
+          why: "Most wasted work comes from building the wrong thing. Sorting requests up front is cheap and saves the expensive steps for work that's ready.",
+          real: "The triage stage: a small model labels the issue “ready”, “needs spec” or “blocked” and comments with a plan." },
+        gate: { name: "Front gate", one: "On the list? Budget left?",
+          what: "Before any building starts, the gate checks two things. Is the request from someone on the trusted list? Is there money left in this month's budget? If either answer is no, the work waits here.",
+          why: "It stops strangers from spending your money or slipping hidden instructions to the AI, and makes sure costs can never run away.",
+          real: "Repo allowlist, issue-author trust check, and a hard monthly spending limit in factory.yaml." },
+        workshop: { name: "AI workshop", one: "Builds it in a sealed room.",
+          what: "An AI builder makes the change inside a sealed room that's thrown away afterwards. It only has the tools it has been allowed, and it holds no keys to the rest of the factory.",
+          why: "The AI can work unattended, around the clock, without anyone watching each step, and a mistake inside the room can't spread outside it.",
+          real: "Claude Code running in a disposable GitHub Actions machine with a scoped tool list." },
+        checks: { name: "Quality checks", one: "Same tests a person's work must pass.",
+          what: "The finished work goes through the same automatic tests that a human developer's work must pass. If a test fails, the work goes back to the workshop to be fixed and tried again.",
+          why: "The AI is held to the same bar as people. Nothing is trusted just because it looks right.",
+          real: "The project's own CI: tests, code-style checks and the benchmark." },
+        inspector: { name: "Safety inspector", one: "Rejects off-limits changes.",
+          what: "The inspector looks at which parts of the app the work touched. If it went anywhere off-limits, such as password storage or production servers, the work is rejected automatically, no matter how good it is.",
+          why: "Some areas are too important to leave to an AI. This rule is enforced by the factory itself, not just requested politely.",
+          real: "Protected-path policy: violating pull requests are closed and their branch deleted." },
+        review: { name: "Human review", one: "A person approves it.",
+          what: "A person looks over the finished, tested work and approves it, or asks for changes. This is where most of the people-time goes, and it's the number a good factory keeps shrinking.",
+          why: "People stay in charge of what ships. The factory's job is to hand them work that's quick to say yes to.",
+          real: "Pull request review by a maintainer." },
+        shipped: { name: "Shipped", one: "Live, and logged.",
+          what: "The change goes live. Its whole story (the request, what the AI did, how long people spent and what it cost) is written into the factory's logbook.",
+          why: "Without the logbook, the factory can't learn. Every job becomes evidence for the weekly improvement.",
+          real: "Merged pull request, plus a session record saved to the factory's data branch." },
+      },
+      loop: [
+        { name: "Logbook", text: "Every job is recorded: what was asked, what the AI did, people-time and cost.", real: "Session records on the factory-data branch." },
+        { name: "Grader", text: "Once a week an AI grader scores the jobs against a list of common mistakes.", real: "The daily/weekly evaluation stage and its failure-mode rubric." },
+        { name: "Better instructions", text: "An AI proposes one fix to the instruction book, aimed at the most common mistake.", real: "The self-improvement agent edits the factory's prompts." },
+        { name: "Person approves", text: "A person reviews the change. Then every future job uses the better instructions.", real: "A pull request against the factory itself, which only a person can merge." },
+      ],
+      titles: {
+        clear: ["Add a dark-mode switch", "Fix the typo on the pricing page", "Export the report as a spreadsheet", "Show the date on every invoice",
+                "Add a ‘copy link’ button", "Sort the customer list by name", "Make the search box remember my last search", "Add a print button to receipts",
+                "Show a warning before deleting a project", "Translate the menu into Indonesian"],
+        vague: ["Make the app faster", "Improve the dashboard", "Fix the login thing", "Make it look nicer"],
+        risky: ["Change how passwords are stored", "Update the payment server settings", "Give admins access to all accounts"],
+        stranger: ["Add a link to my website (outside visitor)", "Please change the homepage text (unknown sender)"],
+      },
+      fix: {
+        firstTry: { what: "checks failed the first time", fix: "“Run every check yourself before handing the work in.”" },
+        changes: { what: "the reviewer asked for changes", fix: "“Keep each change small, and explain what you did and why.”" },
+        offlimits: { what: "the work wandered into off-limits areas", fix: "“Never touch the password or server folders. Stop and ask instead.”" },
+      },
+      log: {
+        opened: () => "The factory opens. Requests will start arriving. Try sending your own with the buttons above.",
+        newReq: (L) => `New request ${L}.`, newStranger: (L) => `New request ${L} from someone outside the team.`,
+        sentBack: (L) => `<span class="meh">Sent back:</span> ${L} is too vague. The requester gets a few questions.`,
+        toPerson: (L) => `<span class="bad">Handed to a person:</span> ${L} is too sensitive for the AI.`,
+        gateStranger: (L) => `<span class="bad">Stopped at the gate:</span> ${L} came from outside the team.`,
+        onHold: (L) => `<span class="meh">On hold:</span> the monthly budget is used up, so ${L} waits at the gate.`,
+        clarified: (L) => `${L} came back with answers. Back on the line.`,
+        checkFailed: (L) => `<span class="meh">Check failed:</span> ${L} goes back to the AI to fix.`,
+        askedHelp: (L) => `<span class="meh">Asked for help:</span> ${L} kept failing its checks, so the AI handed it to a person.`,
+        rejected: (L) => `<span class="bad">Rejected by the inspector:</span> ${L} touched an off-limits area. It never reached a person.`,
+        changes: (L, m) => `<span class="meh">Changes requested:</span> the reviewer spent ${m} min on ${L} and asked for a fix.`,
+        shipped: (L, m) => `<span class="good">Shipped:</span> ${L}. People spent ${m} min in total.`,
+        weekReport: (w, n, avg) => `<b>Week ${w} report:</b> ${n} shipped${avg != null ? `, ${avg} min of people-time each` : ""}. The weekly review starts.`,
+        newMonth: (b) => `A new month starts. The budget is topped up to $${b}.`,
+        improved: (v, fixKey) => `<span class="good">Factory improved:</span> instruction book v${v} approved. Fix: ${I18N.en.fix[fixKey].fix}`,
+      },
+      step: {
+        arrived: () => "Request arrived.",
+        triageVague: () => "Triage: too vague. Sent back with three questions.",
+        clarified: () => "The requester answered the questions and resubmitted.",
+        triageRisky: () => "Triage: sensitive (passwords / payments). Handed to a person, not the AI.",
+        triageClear: () => "Triage: clear. Wrote a short work plan.",
+        gateStranger: () => "Gate: the requester isn't on the trusted list. Stopped.",
+        gateBudget: () => "Gate: this month's budget is used up. Waiting for next month.",
+        gateOk: () => "Gate: trusted requester, budget available. Let through.",
+        built: (c) => `Workshop: the AI built the change (cost $${c}).`,
+        fixed: (c) => `Workshop: the AI fixed the failing check (cost $${c}).`,
+        checksGiveUp: () => "Checks: still failing after three tries. The AI stopped and asked a person for help.",
+        checksFail: () => "Checks: a test failed. Back to the workshop to fix it.",
+        checksPass: () => "Checks: all tests passed.",
+        inspReject: () => "Inspector: the work touched an off-limits area. Rejected automatically.",
+        inspOk: () => "Inspector: nothing off-limits was touched.",
+        reviewChanges: (m) => `Review: the person asked for changes (${m} min). Back to the workshop.`,
+        reviewOk: (m) => `Review: approved by a person (${m} min).`,
+        shipped: (m, c) => `Shipped. Logbook: ${m} min of people-time, $${c} of AI time.`,
+      },
+      status: {
+        waiting: () => "Waiting for the first week to finish…",
+        next: () => "The next weekly review starts at the end of this week.",
+        weekTop: (w, n, k) => `Week ${w}: ${n} shipped. The most common problem: ${I18N.en.fix[k].what}.`,
+        weekNone: (w, n) => `Week ${w}: ${n} shipped, no common problem stood out.`,
+        proposed: (k) => `Proposed fix to the instruction book: ${I18N.en.fix[k].fix}`,
+        noFix: () => "No fix needed this week, so the instruction book stays as it is.",
+        approved: (v, a, b) => `A person reviewed and approved the fix. Instruction book v${v} is now in use: first-time success went from ${a}% to ${b}%.`,
+        nothing: () => "Nothing to approve this week.",
+      },
+    },
+
+    id: {
+      title: "Di Dalam Pabrik Perangkat Lunak",
+      ui: {
+        eyebrow: "Penjelasan interaktif", h1: "Di Dalam Pabrik Perangkat Lunak",
+        lede: "Pabrik perangkat lunak (software factory) adalah jalur perakitan untuk perubahan pada sebuah aplikasi. Orang menuliskan apa yang mereka butuhkan; pekerja AI membangunnya di dalam ruang tertutup; pemeriksaan otomatis dan seorang peninjau manusia menyetujuinya. Lalu setiap minggu <em>pabrik ini mempelajari kesalahannya sendiri dan memperbaiki instruksinya.</em>",
+        controlsAria: "Kontrol simulasi", boardAria: "Rapor pabrik",
+        send: "Kirim permintaan:", tClear: "Jelas", tVague: "Kurang jelas", tRisky: "Sensitif", tStranger: "Dari orang luar",
+        auto: "Permintaan terus berdatangan", speed: "Kecepatan", reset: "Mulai ulang", pause: "Jeda", start: "Jalankan",
+        bWeek: "Minggu", bShipped: "Perubahan dirilis", bMins: "Waktu manusia per perubahan", bMinsSub: "menit · cara manual ≈ 120",
+        bQuality: "Skor kualitas", bQualitySub: "dari 5, dinilai tiap minggu", bCaught: "Tertangkap &amp; dihentikan", bBudget: "Sisa anggaran bulan ini",
+        lgClear: "Permintaan jelas", lgVague: "Permintaan kurang jelas", lgRisky: "Permintaan sensitif (kata sandi, pembayaran)",
+        lgStranger: "Permintaan dari orang di luar tim", lgHint: "Klik stasiun atau order kerja mana pun untuk penjelasannya.",
+        loopTitle: "Siklus perbaikan diri", loopSub: "Inilah yang mengubah jalur perakitan menjadi pabrik yang makin baik dengan sendirinya.",
+        book: "Buku<br>instruksi", skill: "Seberapa sering AI benar pada percobaan pertama:",
+        chartCap: "Waktu manusia per perubahan yang dirilis, per minggu. Makin rendah makin baik.",
+        logTitle: "Apa yang baru terjadi", logSub: "Catatan lantai pabrik dalam bahasa sehari-hari, yang terbaru di atas.",
+        footer: "Semua angka di sini bersifat ilustratif, dibuat untuk menunjukkan bagaimana bagian-bagiannya saling terhubung. Di pabrik sungguhan, angka itu berasal dari buku log pabrik. Rancangannya sama dengan starter kit sungguhan: permintaan adalah issue GitHub, pembangun AI adalah Claude Code yang berjalan di mesin cloud sekali pakai, pemeriksaannya adalah tes milik proyek itu sendiri, dan perubahan dirilis sebagai pull request yang sudah ditinjau.",
+      },
+      dayOf: (d, n) => `hari ${d} dari ${n}`, onLine: (n) => `${n} di jalur`,
+      caught: (g, r, p) => `${g} di gerbang · ${r} oleh inspektur · ${p} ke manusia`,
+      who: { People: "Orang", Person: "Manusia", AI: "AI", Automatic: "Otomatis", Done: "" },
+      whoSub: { People: "Dikerjakan oleh orang.", Person: "Dikerjakan oleh manusia.", AI: "Dikerjakan oleh AI.", Automatic: "Berjalan otomatis, dengan aturan tetap.", Done: "Ujung jalur." },
+      tally: {
+        inbox: (n) => `<b>${n}</b> diterima`, triage: (a, b) => `<b>${a}</b> dikembalikan · <b>${b}</b> ke manusia`,
+        gate: (n, empty) => `<b>${n}</b> dihentikan${empty ? " · <b>anggaran habis</b>" : ""}`, workshop: (n) => `<b>${n}</b> dibangun`,
+        checks: (n) => `<b>${n}</b> dikembalikan untuk diperbaiki`, inspector: (n) => `<b>${n}</b> ditolak`,
+        review: (n) => `<b>${n}</b> menit waktu manusia`, shipped: (n) => `<b>${n}</b> dirilis`,
+      },
+      stationAria: (name, one) => `${name}: ${one} Lihat penjelasan.`,
+      why: "Mengapa penting:", real: "Dalam sistem nyata",
+      loopStep: "Langkah siklus", loopPart: "Bagian dari siklus perbaikan diri mingguan.",
+      loopWhy: "Alat biasa hanya sebaik saat pertama kali dipasang. Siklus ini membuat kesalahan minggu ini memperbaiki pekerjaan minggu depan, dan setiap perubahan aturan tetap disetujui oleh manusia.",
+      order: "Order kerja", orderAria: (id, t) => `Order kerja ${id}: ${t}`,
+      orderGone: "Order kerja ini sudah meninggalkan lantai pabrik. Cerita lengkapnya ada di buku log dan di daftar di bawah.",
+      kinds: { clear: "permintaan yang jelas", vague: "permintaan yang kurang jelas", risky: "permintaan sensitif", stranger: "permintaan dari luar tim" },
+      nowAt: "Sekarang di:", journey: "Perjalanannya sejauh ini:", soFar: "Sejauh ini",
+      soFarLine: (m, c, a) => `${m} menit waktu manusia · $${c} biaya AI · ${a} kali percobaan membangun`,
+      when: "Mg", chartW: "M", min: "mnt", chartEmpty: "Batang pertama muncul saat minggu 1 selesai.",
+      chartAria: "Grafik waktu manusia per perubahan yang dirilis, per minggu",
+      clarified: " (sudah diperjelas)",
+      stations: {
+        inbox: { name: "Permintaan", one: "Seseorang menuliskan kebutuhannya.",
+          what: "Siapa pun di tim menuliskan apa yang mereka butuhkan, seperti mengisi tiket servis di bengkel: apa yang rusak atau kurang, dan seperti apa hasil yang dianggap “selesai”.",
+          why: "Permintaan yang jelas dan tertulis adalah bahan baku. Makin baik permintaannya, makin sedikit yang perlu dijelaskan nanti.",
+          real: "Sebuah issue GitHub di proyek." },
+        triage: { name: "Meja triase", one: "Jelas? Kurang jelas? Sensitif?",
+          what: "AI yang cepat dan murah membaca setiap permintaan baru. Yang jelas diberi rencana kerja singkat. Yang kurang jelas dikembalikan ke pemohon dengan beberapa pertanyaan. Yang sensitif, seperti apa pun yang menyentuh kata sandi atau pembayaran, diserahkan ke manusia.",
+          why: "Sebagian besar pekerjaan yang sia-sia berasal dari membangun hal yang salah. Memilah permintaan di awal itu murah, dan langkah yang mahal hanya dipakai untuk pekerjaan yang sudah siap.",
+          real: "Tahap triase: model kecil memberi label “ready”, “needs spec”, atau “blocked” pada issue dan menuliskan rencana sebagai komentar." },
+        gate: { name: "Gerbang depan", one: "Ada di daftar? Anggaran masih ada?",
+          what: "Sebelum pembangunan dimulai, gerbang memeriksa dua hal. Apakah permintaan datang dari orang di daftar tepercaya? Apakah anggaran bulan ini masih tersisa? Jika salah satu jawabannya tidak, pekerjaan menunggu di sini.",
+          why: "Gerbang ini mencegah orang asing menghabiskan uang Anda atau menyelipkan instruksi tersembunyi ke AI, dan memastikan biaya tidak pernah lepas kendali.",
+          real: "Daftar repo yang diizinkan, pemeriksaan kepercayaan penulis issue, dan batas belanja bulanan di factory.yaml." },
+        workshop: { name: "Bengkel AI", one: "Membangun di ruang tertutup.",
+          what: "Pembangun AI membuat perubahan di dalam ruang tertutup yang dibuang setelah selesai. Ia hanya memegang alat yang diizinkan, dan tidak memegang kunci ke bagian lain pabrik.",
+          why: "AI bisa bekerja sendiri kapan saja tanpa diawasi di setiap langkah, dan kesalahan di dalam ruangan tidak bisa menyebar keluar.",
+          real: "Claude Code yang berjalan di mesin GitHub Actions sekali pakai dengan daftar alat yang dibatasi." },
+        checks: { name: "Uji kualitas", one: "Tes yang sama dengan pekerjaan manusia.",
+          what: "Hasil kerja melewati tes otomatis yang sama dengan yang harus dilewati pekerjaan developer manusia. Jika ada tes yang gagal, pekerjaan kembali ke bengkel untuk diperbaiki dan dicoba lagi.",
+          why: "AI dinilai dengan standar yang sama dengan manusia. Tidak ada yang dipercaya hanya karena kelihatannya benar.",
+          real: "CI milik proyek sendiri: tes, pemeriksaan gaya kode, dan benchmark." },
+        inspector: { name: "Inspektur keselamatan", one: "Menolak perubahan di area terlarang.",
+          what: "Inspektur melihat bagian aplikasi mana saja yang disentuh. Jika pekerjaan masuk ke area terlarang, seperti penyimpanan kata sandi atau server produksi, pekerjaan itu otomatis ditolak, sebagus apa pun hasilnya.",
+          why: "Beberapa area terlalu penting untuk diserahkan ke AI. Aturan ini ditegakkan oleh pabrik itu sendiri, bukan sekadar diminta dengan sopan.",
+          real: "Kebijakan jalur terlindungi: pull request yang melanggar ditutup dan branch-nya dihapus." },
+        review: { name: "Tinjauan manusia", one: "Seseorang menyetujuinya.",
+          what: "Seseorang memeriksa hasil kerja yang sudah selesai dan lulus tes, lalu menyetujuinya atau meminta perubahan. Di sinilah sebagian besar waktu manusia terpakai, dan angka inilah yang terus diperkecil oleh pabrik yang baik.",
+          why: "Manusia tetap memegang kendali atas apa yang dirilis. Tugas pabrik adalah menyerahkan pekerjaan yang mudah untuk disetujui.",
+          real: "Tinjauan pull request oleh maintainer." },
+        shipped: { name: "Dirilis", one: "Tayang, dan tercatat.",
+          what: "Perubahan ditayangkan. Seluruh ceritanya (permintaannya, apa yang dikerjakan AI, berapa lama waktu manusia, dan berapa biayanya) dicatat di buku log pabrik.",
+          why: "Tanpa buku log, pabrik tidak bisa belajar. Setiap pekerjaan menjadi bukti untuk perbaikan mingguan.",
+          real: "Pull request yang sudah di-merge, ditambah catatan sesi yang disimpan di branch data pabrik." },
+      },
+      loop: [
+        { name: "Buku log", text: "Setiap pekerjaan dicatat: apa yang diminta, apa yang dikerjakan AI, waktu manusia, dan biayanya.", real: "Catatan sesi di branch factory-data." },
+        { name: "Penilai", text: "Seminggu sekali, AI penilai memberi skor pada pekerjaan berdasarkan daftar kesalahan umum.", real: "Tahap evaluasi harian/mingguan beserta rubrik jenis kegagalannya." },
+        { name: "Instruksi lebih baik", text: "AI mengusulkan satu perbaikan pada buku instruksi, menyasar kesalahan yang paling sering terjadi.", real: "Agen perbaikan diri menyunting prompt pabrik." },
+        { name: "Manusia menyetujui", text: "Seseorang meninjau perubahan itu. Setelah itu, setiap pekerjaan berikutnya memakai instruksi yang lebih baik.", real: "Pull request terhadap pabrik itu sendiri, yang hanya bisa di-merge oleh manusia." },
+      ],
+      titles: {
+        clear: ["Tambahkan tombol mode gelap", "Perbaiki salah ketik di halaman harga", "Ekspor laporan sebagai spreadsheet", "Tampilkan tanggal di setiap faktur",
+                "Tambahkan tombol ‘salin tautan’", "Urutkan daftar pelanggan berdasarkan nama", "Buat kotak pencarian mengingat pencarian terakhir", "Tambahkan tombol cetak pada struk",
+                "Tampilkan peringatan sebelum menghapus proyek", "Terjemahkan menu ke bahasa Indonesia"],
+        vague: ["Buat aplikasinya lebih cepat", "Perbaiki dasbornya", "Benahi masalah login itu", "Buat tampilannya lebih bagus"],
+        risky: ["Ubah cara penyimpanan kata sandi", "Perbarui pengaturan server pembayaran", "Beri admin akses ke semua akun"],
+        stranger: ["Tambahkan tautan ke situs saya (pengunjung luar)", "Tolong ubah teks beranda (pengirim tak dikenal)"],
+      },
+      fix: {
+        firstTry: { what: "tes gagal pada percobaan pertama", fix: "“Jalankan sendiri semua pemeriksaan sebelum menyerahkan pekerjaan.”" },
+        changes: { what: "peninjau meminta perubahan", fix: "“Buat setiap perubahan tetap kecil, dan jelaskan apa yang dikerjakan serta alasannya.”" },
+        offlimits: { what: "pekerjaan masuk ke area terlarang", fix: "“Jangan pernah menyentuh folder kata sandi atau server. Berhenti dan bertanyalah.”" },
+      },
+      log: {
+        opened: () => "Pabrik dibuka. Permintaan akan mulai berdatangan. Coba kirim permintaan sendiri dengan tombol di atas.",
+        newReq: (L) => `Permintaan baru ${L}.`, newStranger: (L) => `Permintaan baru ${L} dari orang di luar tim.`,
+        sentBack: (L) => `<span class="meh">Dikembalikan:</span> ${L} kurang jelas. Pemohon diberi beberapa pertanyaan.`,
+        toPerson: (L) => `<span class="bad">Diserahkan ke manusia:</span> ${L} terlalu sensitif untuk AI.`,
+        gateStranger: (L) => `<span class="bad">Dihentikan di gerbang:</span> ${L} datang dari luar tim.`,
+        onHold: (L) => `<span class="meh">Ditahan:</span> anggaran bulanan sudah habis, jadi ${L} menunggu di gerbang.`,
+        clarified: (L) => `${L} kembali dengan jawaban. Masuk jalur lagi.`,
+        checkFailed: (L) => `<span class="meh">Tes gagal:</span> ${L} dikembalikan ke AI untuk diperbaiki.`,
+        askedHelp: (L) => `<span class="meh">Minta bantuan:</span> ${L} terus gagal tes, jadi AI menyerahkannya ke manusia.`,
+        rejected: (L) => `<span class="bad">Ditolak inspektur:</span> ${L} menyentuh area terlarang. Pekerjaan ini tidak pernah sampai ke manusia.`,
+        changes: (L, m) => `<span class="meh">Diminta perubahan:</span> peninjau menghabiskan ${m} menit untuk ${L} dan meminta perbaikan.`,
+        shipped: (L, m) => `<span class="good">Dirilis:</span> ${L}. Total waktu manusia ${m} menit.`,
+        weekReport: (w, n, avg) => `<b>Laporan minggu ${w}:</b> ${n} dirilis${avg != null ? `, rata-rata ${avg} menit waktu manusia` : ""}. Tinjauan mingguan dimulai.`,
+        newMonth: (b) => `Bulan baru dimulai. Anggaran diisi kembali menjadi $${b}.`,
+        improved: (v, fixKey) => `<span class="good">Pabrik membaik:</span> buku instruksi v${v} disetujui. Perbaikan: ${I18N.id.fix[fixKey].fix}`,
+      },
+      step: {
+        arrived: () => "Permintaan masuk.",
+        triageVague: () => "Triase: kurang jelas. Dikembalikan dengan tiga pertanyaan.",
+        clarified: () => "Pemohon menjawab pertanyaan dan mengirim ulang.",
+        triageRisky: () => "Triase: sensitif (kata sandi / pembayaran). Diserahkan ke manusia, bukan ke AI.",
+        triageClear: () => "Triase: jelas. Rencana kerja singkat sudah ditulis.",
+        gateStranger: () => "Gerbang: pemohon tidak ada di daftar tepercaya. Dihentikan.",
+        gateBudget: () => "Gerbang: anggaran bulan ini habis. Menunggu bulan depan.",
+        gateOk: () => "Gerbang: pemohon tepercaya, anggaran tersedia. Diizinkan lewat.",
+        built: (c) => `Bengkel: AI membangun perubahan (biaya $${c}).`,
+        fixed: (c) => `Bengkel: AI memperbaiki tes yang gagal (biaya $${c}).`,
+        checksGiveUp: () => "Uji: masih gagal setelah tiga kali. AI berhenti dan meminta bantuan manusia.",
+        checksFail: () => "Uji: ada tes yang gagal. Kembali ke bengkel untuk diperbaiki.",
+        checksPass: () => "Uji: semua tes lulus.",
+        inspReject: () => "Inspektur: pekerjaan menyentuh area terlarang. Ditolak otomatis.",
+        inspOk: () => "Inspektur: tidak ada area terlarang yang disentuh.",
+        reviewChanges: (m) => `Tinjauan: peninjau meminta perubahan (${m} menit). Kembali ke bengkel.`,
+        reviewOk: (m) => `Tinjauan: disetujui oleh manusia (${m} menit).`,
+        shipped: (m, c) => `Dirilis. Buku log: ${m} menit waktu manusia, $${c} biaya AI.`,
+      },
+      status: {
+        waiting: () => "Menunggu minggu pertama selesai…",
+        next: () => "Tinjauan mingguan berikutnya dimulai di akhir minggu ini.",
+        weekTop: (w, n, k) => `Minggu ${w}: ${n} dirilis. Masalah yang paling sering muncul: ${I18N.id.fix[k].what}.`,
+        weekNone: (w, n) => `Minggu ${w}: ${n} dirilis, tidak ada masalah umum yang menonjol.`,
+        proposed: (k) => `Usulan perbaikan untuk buku instruksi: ${I18N.id.fix[k].fix}`,
+        noFix: () => "Tidak perlu perbaikan minggu ini, jadi buku instruksi tetap seperti semula.",
+        approved: (v, a, b) => `Seseorang meninjau dan menyetujui perbaikannya. Buku instruksi v${v} kini dipakai: keberhasilan percobaan pertama naik dari ${a}% ke ${b}%.`,
+        nothing: () => "Tidak ada yang perlu disetujui minggu ini.",
+      },
+    },
+  };
+
+  // ═════════════════════════ STATIC STRUCTURE ═════════════════════════
   const ICON = {
     inbox: '<path d="M4 13h5l1.5 3h3L15 13h5M4 13l2.5-8h11L20 13v6H4z"/>',
     triage: '<path d="M9 4h6v3H9zM6 6H5v15h14V6h-1M8.5 12l2 2 4-4.5M8.5 17.5h7"/>',
@@ -264,135 +567,142 @@ footer { font-size: 13.5px; color: var(--muted); max-width: 80ch; }
     shipped: '<path d="M3 7h11v9H3zM14 10h4l3 3v3h-7M7 19a2 2 0 1 0 0-.01M17 19a2 2 0 1 0 0-.01"/>',
   };
   const STATIONS = [
-    { id: "inbox", who: "People", name: "Requests", one: "Someone writes down what they need.",
-      what: "Anyone on the team writes down what they need, the way you'd fill in a ticket at a repair shop: what's wrong or missing, and what “done” looks like.",
-      why: "Clear, written requests are the raw material. The better the request, the less anyone has to explain later.",
-      real: "A GitHub issue in the project." },
-    { id: "triage", who: "AI", name: "Triage desk", one: "Clear? Vague? Sensitive?",
-      what: "A quick, inexpensive AI reads every new request. Clear ones get a short work plan. Vague ones go back to the requester with a few questions. Sensitive ones, like anything touching passwords or payments, are handed to a person instead.",
-      why: "Most wasted work comes from building the wrong thing. Sorting requests up front is cheap and saves the expensive steps for work that's ready.",
-      real: "The triage stage: a small model labels the issue “ready”, “needs spec” or “blocked” and comments with a plan." },
-    { id: "gate", who: "Automatic", name: "Front gate", one: "On the list? Budget left?",
-      what: "Before any building starts, the gate checks two things. Is the request from someone on the trusted list? Is there money left in this month's budget? If either answer is no, the work waits here.",
-      why: "It stops strangers from spending your money or slipping hidden instructions to the AI, and makes sure costs can never run away.",
-      real: "Repo allowlist, issue-author trust check, and a hard monthly spending limit in factory.yaml." },
-    { id: "workshop", who: "AI", name: "AI workshop", one: "Builds it in a sealed room.",
-      what: "An AI builder makes the change inside a sealed room that's thrown away afterwards. It only has the tools it has been allowed, and it holds no keys to the rest of the factory.",
-      why: "The AI can work unattended, around the clock, without anyone watching each step, and a mistake inside the room can't spread outside it.",
-      real: "Claude Code running in a disposable GitHub Actions machine with a scoped tool list." },
-    { id: "checks", who: "Automatic", name: "Quality checks", one: "Same tests a person's work must pass.",
-      what: "The finished work goes through the same automatic tests that a human developer's work must pass. If a test fails, the work goes back to the workshop to be fixed and tried again.",
-      why: "The AI is held to the same bar as people. Nothing is trusted just because it looks right.",
-      real: "The project's own CI: tests, code-style checks and the benchmark." },
-    { id: "inspector", who: "Automatic", name: "Safety inspector", one: "Rejects off-limits changes.",
-      what: "The inspector looks at which parts of the app the work touched. If it went anywhere off-limits, such as password storage or production servers, the work is rejected automatically, no matter how good it is.",
-      why: "Some areas are too important to leave to an AI. This rule is enforced by the factory itself, not just requested politely.",
-      real: "Protected-path policy: violating pull requests are closed and their branch deleted." },
-    { id: "review", who: "Person", name: "Human review", one: "A person approves it.", human: true,
-      what: "A person looks over the finished, tested work and approves it, or asks for changes. This is where most of the people-time goes, and it's the number a good factory keeps shrinking.",
-      why: "People stay in charge of what ships. The factory's job is to hand them work that's quick to say yes to.",
-      real: "Pull request review by a maintainer." },
-    { id: "shipped", who: "Done", name: "Shipped", one: "Live, and logged.",
-      what: "The change goes live. Its whole story (the request, what the AI did, how long people spent and what it cost) is written into the factory's logbook.",
-      why: "Without the logbook, the factory can't learn. Every job becomes evidence for the weekly improvement.",
-      real: "Merged pull request, plus a session record saved to the factory's data branch." },
+    { id: "inbox", who: "People" }, { id: "triage", who: "AI" }, { id: "gate", who: "Automatic" }, { id: "workshop", who: "AI" },
+    { id: "checks", who: "Automatic" }, { id: "inspector", who: "Automatic" }, { id: "review", who: "Person" }, { id: "shipped", who: "Done" },
   ];
-  const LOOP = [
-    { name: "Logbook", text: "Every job is recorded: what was asked, what the AI did, people-time and cost.",
-      real: "Session records on the factory-data branch." },
-    { name: "Grader", text: "Once a week an AI grader scores the jobs against a list of common mistakes.",
-      real: "The daily/weekly evaluation stage and its failure-mode rubric." },
-    { name: "Better instructions", text: "An AI proposes one fix to the instruction book, aimed at the most common mistake.",
-      real: "The self-improvement agent edits the factory's prompts." },
-    { name: "Person approves", text: "A person reviews the change. Then every future job uses the better instructions.",
-      real: "A pull request against the factory itself, which only a person can merge." },
-  ];
-  const TITLES = {
-    clear: ["Add a dark-mode switch", "Fix the typo on the pricing page", "Export the report as a spreadsheet", "Show the date on every invoice",
-            "Add a “copy link” button", "Sort the customer list by name", "Make the search box remember my last search", "Add a print button to receipts",
-            "Show a warning before deleting a project", "Translate the menu into Indonesian"],
-    vague: ["Make the app faster", "Improve the dashboard", "Fix the login thing", "Make it look nicer"],
-    risky: ["Change how passwords are stored", "Update the payment server settings", "Give admins access to all accounts"],
-    stranger: ["Add a link to my website (outside visitor)", "Please change the homepage text (unknown sender)"],
-  };
-  const FIX = {
-    firstTry: { what: "checks failed the first time", fix: "“Run every check yourself before handing the work in.”" },
-    changes: { what: "the reviewer asked for changes", fix: "“Keep each change small, and explain what you did and why.”" },
-    offlimits: { what: "the work wandered into off-limits areas", fix: "“Never touch the password or server folders. Stop and ask instead.”" },
-  };
 
-  // ───────────────────────── tuning ─────────────────────────
-  const DWELL = [1.2, 1.7, 1.0, 3.4, 1.7, 1.1, 2.4, 2.6]; // seconds at 1× per station
+  // ═════════════════════════ TUNING ═════════════════════════
+  const DWELL = [1.2, 1.7, 1.0, 3.4, 1.7, 1.1, 2.4, 2.6];
   const WEEK = 26, DAYS = 5, BUDGET = 40, FEED_EVERY = 3.1;
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // ───────────────────────── state ─────────────────────────
+  // ═════════════════════════ STATE ═════════════════════════
+  let lang = pickLang();
   let S, tokens = [], nextId = 1, running = !reduce, speed = 1, last = 0, focusId = null, selected = { kind: "station", id: "workshop" };
+  let logEntries = [], loopStatus = { key: "waiting", args: [] };
   const fresh = () => ({
     t: 0, week: 1, feedT: 1.5, skill: 0.35, version: 1, budget: BUDGET,
     shipped: 0, sentBack: 0, toPerson: 0, gateStopped: 0, rejected: 0, retries: 0, built: 0, minutesTotal: 0,
     wk: { shipped: 0, minutes: 0, quality: [], firstTry: 0, changes: 0, offlimits: 0 },
     history: [], quality: null, loopPhase: -1, loopT: 0, loopMsg: null,
   });
+  const T = () => I18N[lang];
 
-  // ───────────────────────── DOM build ─────────────────────────
+  function pickLang() {
+    const h = location.hash.replace("#", "");
+    if (h === "id" || h === "en") return h;
+    try { const s = localStorage.getItem("sf-lang"); if (s === "id" || s === "en") return s; } catch (e) {}
+    return (navigator.language || "").toLowerCase().startsWith("id") ? "id" : "en";
+  }
+
+  // ═════════════════════════ DOM BUILD ═════════════════════════
   const $ = (s) => document.querySelector(s);
   const floor = $("#floor"), layer = $("#tokens");
   STATIONS.forEach((st, i) => {
     const b = document.createElement("div");
-    b.className = "station" + (st.human ? " human" : "");
+    b.className = "station" + (st.who === "Person" ? " human" : "");
     b.id = "st-" + st.id; b.tabIndex = 0; b.setAttribute("role", "button");
-    b.setAttribute("aria-label", `${st.name}: ${st.one} Show details.`);
-    b.innerHTML = `<div class="num">${String(i + 1).padStart(2, "0")} · ${st.who === "Person" || st.who === "People" ? `<span class="tag-person">${st.who}</span>` : st.who}</div>
+    b.innerHTML = `<div class="num"></div>
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[st.id]}</svg>
-      <div><h3>${st.name}</h3><p class="one">${st.one}</p></div>
+      <div><h3></h3><p class="one"></p></div>
       <div><div class="bay" data-bay="${i}"></div><div class="tally" id="tally-${st.id}"></div></div>`;
-    const pick = () => { selected = { kind: "station", id: st.id }; focusId = null; renderDetail(); };
+    const pick = () => { selected = { kind: "station", id: st.id }; focusId = null; markFocus(); renderDetail(); };
     b.addEventListener("click", pick);
     b.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
     floor.appendChild(b);
   });
-
   const loopEl = $("#loop");
-  LOOP.forEach((l, i) => {
+  for (let i = 0; i < 4; i++) {
     const b = document.createElement("button");
     b.className = "loop-step"; b.id = "loop-" + i;
-    b.innerHTML = `<span class="n">${i + 1}</span><b>${l.name}</b><span>${l.text}</span>`;
-    b.addEventListener("click", () => { selected = { kind: "loop", id: i }; focusId = null; renderDetail(); });
+    b.addEventListener("click", () => { selected = { kind: "loop", id: i }; focusId = null; markFocus(); renderDetail(); });
     loopEl.appendChild(b);
-  });
-
-  // ───────────────────────── helpers ─────────────────────────
-  const rnd = (a, b) => a + Math.random() * (b - a);
-  const pickOne = (arr) => arr[Math.floor(Math.random() * arr.length)];
-  const fmtWhen = () => `Wk ${S.week}`;
-  function log(html) {
-    const li = document.createElement("li");
-    li.innerHTML = `<span class="when">${fmtWhen()}</span><span>${html}</span>`;
-    const ul = $("#log"); ul.prepend(li);
-    while (ul.children.length > 40) ul.lastChild.remove();
   }
+
+  // ═════════════════════════ LANGUAGE ═════════════════════════
+  function applyLang() {
+    const t = T();
+    document.documentElement.lang = lang;
+    document.title = t.title;
+    document.querySelectorAll("[data-i18n]").forEach(el => { el.innerHTML = t.ui[el.dataset.i18n]; });
+    document.querySelectorAll("[data-i18n-aria]").forEach(el => el.setAttribute("aria-label", t.ui[el.dataset.i18nAria]));
+    document.querySelectorAll("[data-lang]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+    STATIONS.forEach((st, i) => {
+      const el = floor.children[i], s = t.stations[st.id], who = t.who[st.who];
+      el.querySelector(".num").innerHTML = String(i + 1).padStart(2, "0") + (who ? " · " + (st.who === "Person" || st.who === "People" ? `<span class="tag-person">${who}</span>` : who) : "");
+      el.querySelector("h3").textContent = s.name;
+      el.querySelector(".one").textContent = s.one;
+      el.setAttribute("aria-label", t.stationAria(s.name, s.one));
+    });
+    t.loop.forEach((l, i) => { $("#loop-" + i).innerHTML = `<span class="n">${i + 1}</span><b>${l.name}</b><span>${l.text}</span>`; });
+    $("#chart").setAttribute("aria-label", t.chartAria);
+    tokens.forEach(tk => tk.el.setAttribute("aria-label", t.orderAria(tk.id, titleOf(tk))));
+    setRunning(running);
+    renderLog(); renderLoopStatus(); renderDetail(); updateTallies(); drawChart();
+    fitTitles();
+    requestAnimationFrame(layout);
+  }
+  // Station names never break mid-word: shrink the type until the longest word fits.
+  function fitTitles() {
+    floor.querySelectorAll(".station h3").forEach(h => {
+      h.style.fontSize = "";
+      let size = parseFloat(getComputedStyle(h).fontSize);
+      while (h.scrollWidth > h.clientWidth + 1 && size > 13) { size -= 1; h.style.fontSize = size + "px"; }
+    });
+  }
+  addEventListener("resize", fitTitles);
+  document.fonts?.ready?.then(() => { fitTitles(); layout(); });
+
+  function setLang(l) {
+    lang = l;
+    try { localStorage.setItem("sf-lang", l); } catch (e) {}
+    try { history.replaceState(null, "", "#" + l); } catch (e) {}
+    applyLang();
+  }
+  document.querySelectorAll("[data-lang]").forEach(b => b.addEventListener("click", () => setLang(b.dataset.lang)));
+  addEventListener("hashchange", () => { const h = location.hash.slice(1); if ((h === "en" || h === "id") && h !== lang) setLang(h); });
+
+  // ═════════════════════════ HELPERS ═════════════════════════
+  const rnd = (a, b) => a + Math.random() * (b - a);
   const esc = (s) => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  const label = (tk) => `<b>#${tk.id}</b> “${esc(tk.title)}”`;
+  const titleOf = (tk) => T().titles[tk.titleType][tk.titleIdx] + (tk.clarified ? T().clarified : "");
+  const label = (tk) => `<b>#${tk.id}</b> “${esc(titleOf(tk))}”`;
+  function log(key, ...args) {
+    logEntries.unshift({ week: S.week, key, args });
+    if (logEntries.length > 40) logEntries.pop();
+    renderLog(true);
+  }
+  function renderLog(fresh) {
+    const t = T();
+    const ul = $("#log");
+    ul.innerHTML = logEntries.map((e, i) => {
+      const args = e.args.map(a => (a && a.__tk) ? label(a.__tk) : a);
+      return `<li${i === 0 && fresh ? "" : ' style="animation:none"'}><span class="when">${t.when} ${e.week}</span><span>${t.log[e.key](...args)}</span></li>`;
+    }).join("");
+  }
+  const tkRef = (tk) => ({ __tk: tk });
+  function setStatus(key, ...args) { loopStatus = { key, args }; renderLoopStatus(); }
+  function renderLoopStatus() { $("#loop-status").textContent = T().status[loopStatus.key](...loopStatus.args); }
   function pulse(i) { const el = floor.children[i]; el.classList.remove("pulse"); void el.offsetWidth; el.classList.add("pulse"); }
 
-  // ───────────────────────── tokens ─────────────────────────
+  // ═════════════════════════ TOKENS ═════════════════════════
   function addRequest(type) {
     type = type || weighted();
-    const tk = { id: nextId++, type, title: pickOne(TITLES[type]), stage: 0, timer: DWELL[0], attempts: 0, mins: 0,
-                 state: "move", journey: [], fails: 0, offlimits: false, changes: false, cost: 0, flag: null };
+    const list = I18N.en.titles[type];
+    const tk = { id: nextId++, type, titleType: type, titleIdx: Math.floor(Math.random() * list.length), clarified: false,
+                 stage: 0, timer: DWELL[0], attempts: 0, mins: 0, state: "move", journey: [], fails: 0, offlimits: false, changes: false, cost: 0 };
     const el = document.createElement("button");
     el.className = `token t-${type}`; el.textContent = "#" + tk.id;
-    el.setAttribute("aria-label", `Work order ${tk.id}: ${tk.title}`);
+    el.setAttribute("aria-label", T().orderAria(tk.id, titleOf(tk)));
     el.addEventListener("click", (e) => { e.stopPropagation(); focusId = tk.id; selected = { kind: "token", id: tk.id }; renderDetail(); markFocus(); });
     tk.el = el; el.style.transition = "none"; layer.appendChild(el);
     tokens.push(tk);
-    step(tk, `Request ${label(tk)} arrived.`);
-    log(`New request ${label(tk)}${type === "stranger" ? " from someone outside the team." : "."}`);
+    step(tk, "arrived");
+    log(type === "stranger" ? "newStranger" : "newReq", tkRef(tk));
     layout(); void el.offsetWidth; el.style.transition = ""; updateTallies();
   }
   function weighted() { const r = Math.random(); return r < .6 ? "clear" : r < .75 ? "vague" : r < .85 ? "risky" : "stranger"; }
-  function step(tk, text) { tk.journey.push(text); if (selected.kind === "token" && selected.id === tk.id) renderDetail(); }
+  function step(tk, key, ...args) { tk.journey.push({ key, args }); if (selected.kind === "token" && selected.id === tk.id) renderDetail(); }
   function setFlag(tk, txt, color) {
     tk.el.querySelector(".flag")?.remove();
     if (!txt) return;
@@ -400,97 +710,80 @@ footer { font-size: 13.5px; color: var(--muted); max-width: 80ch; }
     tk.el.appendChild(f);
   }
   function moveTo(tk, stage) { tk.stage = stage; tk.timer = DWELL[stage] * rnd(.8, 1.25); pulse(stage); layout(); }
-  function exitToken(tk, flagTxt, color) {
-    tk.state = "exit"; tk.timer = 2.6; setFlag(tk, flagTxt, color); layout();
-  }
+  function exitToken(tk, flagTxt, color) { tk.state = "exit"; tk.timer = 2.6; setFlag(tk, flagTxt, color); layout(); }
 
   function advance(tk) {
     const st = tk.stage;
     if (tk.state === "exit") { tk.el.classList.add("out"); setTimeout(() => tk.el.remove(), 600); tokens = tokens.filter(x => x !== tk); layout(); return; }
-    if (tk.state === "clarify") { // requester answered the triage questions
-      tk.state = "move"; tk.type = "clear"; tk.el.className = "token t-clear"; tk.el.textContent = "#" + tk.id; tk.title += " (clarified)";
-      step(tk, "The requester answered the questions and resubmitted."); log(`${label(tk)} came back with answers. Back on the line.`);
+    if (tk.state === "clarify") {
+      tk.state = "move"; tk.type = "clear"; tk.clarified = true; tk.el.className = "token t-clear"; tk.el.textContent = "#" + tk.id;
+      step(tk, "clarified"); log("clarified", tkRef(tk));
       moveTo(tk, 1); return;
     }
     switch (st) {
       case 0: moveTo(tk, 1); break;
-      case 1: // triage
+      case 1:
         if (tk.type === "vague") {
           S.sentBack++; tk.state = "clarify"; tk.timer = 5; tk.stage = 0; setFlag(tk, "?", "var(--warn)"); layout();
-          step(tk, "Triage: too vague. Sent back with three questions.");
-          log(`<span class="meh">Sent back:</span> ${label(tk)} is too vague. The requester gets a few questions.`); break;
+          step(tk, "triageVague"); log("sentBack", tkRef(tk)); break;
         }
         if (tk.type === "risky") {
-          S.toPerson++; exitToken(tk, "✋", "var(--stop)");
-          step(tk, "Triage: sensitive (passwords / payments). Handed to a person, not the AI.");
-          log(`<span class="bad">Handed to a person:</span> ${label(tk)} is too sensitive for the AI.`); break;
+          S.toPerson++; exitToken(tk, "✋", "var(--stop)"); step(tk, "triageRisky"); log("toPerson", tkRef(tk)); break;
         }
-        step(tk, "Triage: clear. Wrote a short work plan."); moveTo(tk, 2); break;
-      case 2: // gate
+        step(tk, "triageClear"); moveTo(tk, 2); break;
+      case 2:
         if (tk.type === "stranger") {
-          S.gateStopped++; exitToken(tk, "✕", "#7C68C8");
-          step(tk, "Gate: the requester isn't on the trusted list. Stopped.");
-          log(`<span class="bad">Stopped at the gate:</span> ${label(tk)} came from outside the team.`); break;
+          S.gateStopped++; exitToken(tk, "✕", "#7C68C8"); step(tk, "gateStranger"); log("gateStranger", tkRef(tk)); break;
         }
         if (S.budget <= 0) {
-          if (tk.state !== "wait") { tk.state = "wait"; setFlag(tk, "$", "var(--warn)"); step(tk, "Gate: this month's budget is used up. Waiting for next month.");
-            log(`<span class="meh">On hold:</span> the monthly budget is used up, so ${label(tk)} waits at the gate.`); }
+          if (tk.state !== "wait") { tk.state = "wait"; setFlag(tk, "$", "var(--warn)"); step(tk, "gateBudget"); log("onHold", tkRef(tk)); }
           tk.timer = .5; break;
         }
         if (tk.state === "wait") { tk.state = "move"; setFlag(tk, null); }
-        step(tk, "Gate: trusted requester, budget available. Let through."); moveTo(tk, 3); break;
-      case 3: { // workshop
-        tk.attempts++; S.built += tk.attempts === 1 ? 1 : 0;
+        step(tk, "gateOk"); moveTo(tk, 3); break;
+      case 3: {
+        tk.attempts++; if (tk.attempts === 1) S.built++;
         const c = +(rnd(1.6, 2.6) * (1 - .35 * S.skill)).toFixed(2); tk.cost += c; S.budget = +(S.budget - c).toFixed(2);
         const failP = Math.max(.04, .55 * (1 - S.skill));
         tk.failNow = Math.random() < (tk.attempts === 1 ? failP : failP * .45);
         if (tk.attempts === 1) tk.offlimits = Math.random() < Math.max(.02, .16 * (1 - S.skill));
         setFlag(tk, null);
-        step(tk, tk.attempts === 1 ? `Workshop: the AI built the change (cost $${c.toFixed(2)}).` : `Workshop: the AI fixed the failing check (cost $${c.toFixed(2)}).`);
+        step(tk, tk.attempts === 1 ? "built" : "fixed", c.toFixed(2));
         moveTo(tk, 4); break; }
-      case 4: // checks
+      case 4:
         if (tk.failNow) {
           tk.fails++; S.retries++; if (tk.fails === 1) S.wk.firstTry++;
           if (tk.attempts >= 3) {
-            S.toPerson++; exitToken(tk, "✋", "var(--warn)");
-            step(tk, "Checks: still failing after three tries. The AI stopped and asked a person for help.");
-            log(`<span class="meh">Asked for help:</span> ${label(tk)} kept failing its checks, so the AI handed it to a person.`); break;
+            S.toPerson++; exitToken(tk, "✋", "var(--warn)"); step(tk, "checksGiveUp"); log("askedHelp", tkRef(tk)); break;
           }
-          setFlag(tk, "↺", "var(--warn)");
-          step(tk, "Checks: a test failed. Back to the workshop to fix it.");
-          log(`<span class="meh">Check failed:</span> ${label(tk)} goes back to the AI to fix.`); moveTo(tk, 3); break;
+          setFlag(tk, "↺", "var(--warn)"); step(tk, "checksFail"); log("checkFailed", tkRef(tk)); moveTo(tk, 3); break;
         }
-        step(tk, "Checks: all tests passed."); moveTo(tk, 5); break;
-      case 5: // inspector
+        step(tk, "checksPass"); moveTo(tk, 5); break;
+      case 5:
         if (tk.offlimits) {
-          S.rejected++; S.wk.offlimits++; exitToken(tk, "⛔", "var(--stop)");
-          step(tk, "Inspector: the work touched an off-limits area. Rejected automatically.");
-          log(`<span class="bad">Rejected by the inspector:</span> ${label(tk)} touched an off-limits area. It never reached a person.`); break;
+          S.rejected++; S.wk.offlimits++; exitToken(tk, "⛔", "var(--stop)"); step(tk, "inspReject"); log("rejected", tkRef(tk)); break;
         }
-        step(tk, "Inspector: nothing off-limits was touched."); moveTo(tk, 6); break;
-      case 6: { // review
+        step(tk, "inspOk"); moveTo(tk, 6); break;
+      case 6: {
         const base = 4 + 22 * (1 - S.skill) + rnd(0, 4) + tk.fails * 1.5;
         if (!tk.changes && Math.random() < .42 * (1 - S.skill)) {
           tk.changes = true; S.wk.changes++; const m = Math.round(base * .6); tk.mins += m;
-          setFlag(tk, "✎", "var(--warn)");
-          step(tk, `Review: the person asked for changes (${m} min). Back to the workshop.`);
-          log(`<span class="meh">Changes requested:</span> the reviewer spent ${m} min on ${label(tk)} and asked for a fix.`);
+          setFlag(tk, "✎", "var(--warn)"); step(tk, "reviewChanges", m); log("changes", tkRef(tk), m);
           tk.failNow = false; tk.attempts = Math.min(tk.attempts, 2); moveTo(tk, 3); break;
         }
         const m = Math.round(base * (tk.changes ? .5 : 1)); tk.mins += m;
-        step(tk, `Review: approved by a person (${m} min).`); setFlag(tk, null); moveTo(tk, 7); break; }
-      case 7: { // shipped
+        step(tk, "reviewOk", m); setFlag(tk, null); moveTo(tk, 7); break; }
+      case 7: {
         S.shipped++; S.minutesTotal += tk.mins; S.wk.shipped++; S.wk.minutes += tk.mins;
         const q = Math.max(1, Math.min(5, 3 + 2 * S.skill + rnd(-.4, .5) - tk.fails * .5 - (tk.changes ? .7 : 0)));
         S.wk.quality.push(q);
-        step(tk, `Shipped. Logbook: ${tk.mins} min of people-time, $${tk.cost.toFixed(2)} of AI time.`);
-        log(`<span class="good">Shipped:</span> ${label(tk)}. People spent ${tk.mins} min in total.`);
+        step(tk, "shipped", tk.mins, tk.cost.toFixed(2)); log("shipped", tkRef(tk), tk.mins);
         exitToken(tk, "✓", "var(--ok)"); break; }
     }
     updateTallies();
   }
 
-  // ───────────────────────── layout ─────────────────────────
+  // ═════════════════════════ LAYOUT ═════════════════════════
   function layout() {
     const base = floor.getBoundingClientRect();
     const groups = {};
@@ -501,7 +794,7 @@ footer { font-size: 13.5px; color: var(--muted); max-width: 80ch; }
       list.sort((a, b) => a.id - b.id).forEach((tk, i) => {
         const row = Math.floor(i / perRow), col = i % perRow;
         const x = bay.left - base.left + 2 + col * 52;
-        const y = bay.top - base.top + 10 + Math.min(row, 2) * 30 + (row > 2 ? (row - 2) * 4 : 0);
+        const y = bay.top - base.top + 8 + Math.min(row, 1) * 30 + (row > 1 ? (row - 1) * 5 : 0);
         tk.el.style.transform = `translate(${x}px, ${y}px)`;
         tk.el.classList.toggle("working", tk.stage === 3 && tk.state === "move");
       });
@@ -510,7 +803,7 @@ footer { font-size: 13.5px; color: var(--muted); max-width: 80ch; }
   addEventListener("resize", layout);
   function markFocus() { tokens.forEach(tk => tk.el.classList.toggle("focus", tk.id === focusId)); }
 
-  // ───────────────────────── weekly loop ─────────────────────────
+  // ═════════════════════════ WEEKLY LOOP ═════════════════════════
   function endOfWeek() {
     const w = S.wk;
     const avgM = w.shipped ? w.minutes / w.shipped : null;
@@ -519,122 +812,118 @@ footer { font-size: 13.5px; color: var(--muted); max-width: 80ch; }
     if (avgQ != null) S.quality = avgQ;
     const issues = [["firstTry", w.firstTry], ["changes", w.changes], ["offlimits", w.offlimits * 2]].sort((a, b) => b[1] - a[1]);
     const top = issues[0][1] > 0 && w.shipped + w.offlimits > 0 ? issues[0][0] : null;
-    S.loopPhase = 0; S.loopT = 0;
-    S.loopMsg = top
-      ? { top, text: `Week ${S.week}: ${w.shipped} shipped. The most common problem: ${FIX[top].what}.` }
-      : { top: null, text: `Week ${S.week}: ${w.shipped} shipped, no common problem stood out.` };
-    log(`<b>Week ${S.week} report:</b> ${w.shipped} shipped${avgM != null ? `, ${Math.round(avgM)} min of people-time each` : ""}. The weekly review starts.`);
+    S.loopPhase = 0; S.loopT = 0; S.loopMsg = { top, week: S.week, shipped: w.shipped };
+    log("weekReport", S.week, w.shipped, avgM != null ? Math.round(avgM) : null);
     S.week++; S.wk = { shipped: 0, minutes: 0, quality: [], firstTry: 0, changes: 0, offlimits: 0 };
-    if ((S.week - 1) % 4 === 0) { S.budget = BUDGET; log("A new month starts. The budget is topped up to $" + BUDGET + "."); }
+    if ((S.week - 1) % 4 === 0) { S.budget = BUDGET; log("newMonth", BUDGET); }
     drawChart();
   }
   function tickLoop(dt) {
     if (S.loopPhase < 0) return;
     S.loopT += dt;
-    const phaseLen = 1.6;
-    const phase = Math.min(3, Math.floor(S.loopT / phaseLen));
+    const phaseLen = 1.6, phase = Math.min(3, Math.floor(S.loopT / phaseLen));
     if (phase !== S.loopPhase) {
       S.loopPhase = phase;
       const m = S.loopMsg;
-      if (phase === 1) setLoopStatus(m.text);
-      if (phase === 2) setLoopStatus(m.top ? `Proposed fix to the instruction book: ${FIX[m.top].fix}` : "No fix needed this week, so the instruction book stays as it is.");
+      if (phase === 1) m.top ? setStatus("weekTop", m.week, m.shipped, m.top) : setStatus("weekNone", m.week, m.shipped);
+      if (phase === 2) m.top ? setStatus("proposed", m.top) : setStatus("noFix");
       if (phase === 3) {
         if (m.top) {
           S.version++; const before = S.skill; S.skill = Math.min(.92, S.skill + (.92 - S.skill) * .24);
-          setLoopStatus(`A person reviewed and approved the fix. Instruction book v${S.version} is now in use: first-time success went from ${Math.round(before * 100)}% to ${Math.round(S.skill * 100)}%.`);
-          log(`<span class="good">Factory improved:</span> instruction book v${S.version} approved. Fix: ${FIX[m.top].fix}`);
-        } else setLoopStatus("Nothing to approve this week.");
+          setStatus("approved", S.version, Math.round(before * 100), Math.round(S.skill * 100));
+          log("improved", S.version, m.top);
+        } else setStatus("nothing");
       }
     }
-    LOOP.forEach((_, i) => $("#loop-" + i).classList.toggle("active", i === S.loopPhase));
-    if (S.loopT > phaseLen * 4.2) { S.loopPhase = -1; LOOP.forEach((_, i) => $("#loop-" + i).classList.remove("active")); }
+    for (let i = 0; i < 4; i++) $("#loop-" + i).classList.toggle("active", i === S.loopPhase);
+    if (S.loopT > phaseLen * 4.2) { S.loopPhase = -1; for (let i = 0; i < 4; i++) $("#loop-" + i).classList.remove("active"); }
     renderBook();
   }
-  function setLoopStatus(t) { $("#loop-status").textContent = t; }
   function renderBook() {
     $("#book-ver").textContent = "v" + S.version;
     $("#skill-pct").textContent = Math.round(S.skill * 100) + "%";
     $("#skill-bar").style.width = Math.round(S.skill * 100) + "%";
   }
 
-  // ───────────────────────── chart ─────────────────────────
+  // ═════════════════════════ CHART ═════════════════════════
   function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
   function drawChart() {
+    if (!S) return;
+    const t = T();
     const cv = $("#chart"), dpr = devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
     cv.width = W * dpr; cv.height = H * dpr; const g = cv.getContext("2d"); g.scale(dpr, dpr); g.clearRect(0, 0, W, H);
     const pts = S.history.filter(h => h.mins != null);
     const ink = cssVar("--ink"), muted = cssVar("--muted"), rule = cssVar("--rule"), sig = cssVar("--signal");
-    const L = 34, R = 8, T = 10, B = 22, max = 40;
+    const L = 34, R = 8, Tp = 10, B = 22, max = 40;
     g.font = "12px " + cssVar("--body"); g.fillStyle = muted; g.strokeStyle = rule; g.lineWidth = 1;
-    [0, 10, 20, 30, 40].forEach(v => { const y = T + (H - T - B) * (1 - v / max); g.beginPath(); g.moveTo(L, y); g.lineTo(W - R, y); g.stroke(); g.fillText(v, 6, y + 4); });
-    if (!pts.length) { g.fillStyle = muted; g.fillText("The first bar appears when week 1 ends.", L + 8, T + 24); return; }
+    [0, 10, 20, 30, 40].forEach(v => { const y = Tp + (H - Tp - B) * (1 - v / max); g.beginPath(); g.moveTo(L, y); g.lineTo(W - R, y); g.stroke(); g.fillText(v, 6, y + 4); });
+    if (!pts.length) { g.fillStyle = muted; g.fillText(t.chartEmpty, L + 8, Tp + 24); return; }
     const n = Math.max(pts.length, 6), bw = (W - L - R) / n;
     pts.forEach((p, i) => {
-      const v = Math.min(max, p.mins), h = (H - T - B) * v / max, x = L + i * bw + bw * .18, y = H - B - h;
+      const v = Math.min(max, p.mins), h = (H - Tp - B) * v / max, x = L + i * bw + bw * .18, y = H - B - h;
       g.fillStyle = i === pts.length - 1 ? sig : ink; g.globalAlpha = i === pts.length - 1 ? 1 : .55;
       g.fillRect(x, y, bw * .64, h); g.globalAlpha = 1;
-      g.fillStyle = muted; g.fillText("W" + p.week, x, H - 6);
-      if (i === pts.length - 1) { g.fillStyle = ink; g.font = "700 12px " + cssVar("--body"); g.fillText(Math.round(p.mins) + " min", x, y - 4); g.font = "12px " + cssVar("--body"); }
+      g.fillStyle = muted; g.fillText(t.chartW + p.week, x, H - 6);
+      if (i === pts.length - 1) { g.fillStyle = ink; g.font = "700 12px " + cssVar("--body"); g.fillText(Math.round(p.mins) + " " + t.min, x, y - 4); g.font = "12px " + cssVar("--body"); }
     });
   }
   addEventListener("resize", drawChart);
   matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", drawChart);
 
-  // ───────────────────────── board + tallies ─────────────────────────
+  // ═════════════════════════ BOARD + TALLIES ═════════════════════════
   function updateBoard() {
+    const t = T();
     $("#s-week").textContent = S.week;
-    $("#s-weekprog").textContent = `day ${Math.min(DAYS, Math.floor((S.t % WEEK) / WEEK * DAYS) + 1)} of ${DAYS}`;
+    $("#s-weekprog").textContent = t.dayOf(Math.min(DAYS, Math.floor((S.t % WEEK) / WEEK * DAYS) + 1), DAYS);
     $("#s-shipped").textContent = S.shipped;
-    $("#s-inflight").textContent = `${tokens.filter(t => t.state !== "exit").length} on the line`;
-    const last = [...S.history].reverse().find(h => h.mins != null);
-    $("#s-mins").textContent = S.shipped ? Math.round(last ? last.mins : S.minutesTotal / S.shipped) : "–";
+    $("#s-inflight").textContent = t.onLine(tokens.filter(x => x.state !== "exit").length);
+    const lastW = [...S.history].reverse().find(h => h.mins != null);
+    $("#s-mins").textContent = S.shipped ? Math.round(lastW ? lastW.mins : S.minutesTotal / S.shipped) : "–";
     $("#s-quality").textContent = S.quality != null ? S.quality.toFixed(1) : "–";
-    const caught = S.gateStopped + S.rejected + S.toPerson;
-    $("#s-caught").textContent = caught;
-    $("#s-caughtdetail").textContent = `${S.gateStopped} at the gate · ${S.rejected} by the inspector · ${S.toPerson} to a person`;
+    $("#s-caught").textContent = S.gateStopped + S.rejected + S.toPerson;
+    $("#s-caughtdetail").textContent = t.caught(S.gateStopped, S.rejected, S.toPerson);
     const b = Math.max(0, S.budget);
     $("#s-budget").textContent = "$" + Math.round(b);
     const bar = $("#s-budgetbar"); bar.style.width = (b / BUDGET * 100) + "%";
     bar.className = b <= 0 ? "empty" : b < BUDGET * .25 ? "low" : "";
   }
   function updateTallies() {
-    const set = (id, html) => { $("#tally-" + id).innerHTML = html; };
-    set("inbox", `<b>${nextId - 1}</b> received`);
-    set("triage", `<b>${S.sentBack}</b> sent back · <b>${S.toPerson}</b> to a person`);
-    set("gate", `<b>${S.gateStopped}</b> stopped${S.budget <= 0 ? " · <b>budget used up</b>" : ""}`);
-    set("workshop", `<b>${S.built}</b> built`);
-    set("checks", `<b>${S.retries}</b> sent back to fix`);
-    set("inspector", `<b>${S.rejected}</b> rejected`);
-    set("review", `<b>${S.minutesTotal}</b> min of people-time`);
-    set("shipped", `<b>${S.shipped}</b> shipped`);
+    const t = T().tally, set = (id, html) => { $("#tally-" + id).innerHTML = html; };
+    set("inbox", t.inbox(nextId - 1));
+    set("triage", t.triage(S.sentBack, S.toPerson));
+    set("gate", t.gate(S.gateStopped, S.budget <= 0));
+    set("workshop", t.workshop(S.built));
+    set("checks", t.checks(S.retries));
+    set("inspector", t.inspector(S.rejected));
+    set("review", t.review(S.minutesTotal));
+    set("shipped", t.shipped(S.shipped));
     updateBoard();
   }
 
-  // ───────────────────────── detail panel ─────────────────────────
+  // ═════════════════════════ DETAIL PANEL ═════════════════════════
   function renderDetail() {
-    const d = $("#detail");
+    const t = T(), d = $("#detail");
     document.querySelectorAll(".station").forEach(el => el.classList.toggle("selected", selected.kind === "station" && el.id === "st-" + selected.id));
     if (selected.kind === "station") {
-      const st = STATIONS.find(s => s.id === selected.id), i = STATIONS.indexOf(st);
-      d.innerHTML = `<h2>${String(i + 1).padStart(2, "0")} · ${st.name}</h2><p class="sub">${{ People: "Done by people.", Person: "Done by a person.", AI: "Done by an AI.", Automatic: "Done automatically, by fixed rules.", Done: "The end of the line." }[st.who]}</p>
-        <p>${st.what}</p><p><b>Why it matters:</b> ${st.why}</p>
-        <div class="real"><b>In the real system</b>${st.real}</div>`;
+      const st = STATIONS.find(s => s.id === selected.id), i = STATIONS.indexOf(st), s = t.stations[st.id];
+      d.innerHTML = `<h2>${String(i + 1).padStart(2, "0")} · ${s.name}</h2><p class="sub">${t.whoSub[st.who]}</p>
+        <p>${s.what}</p><p><b>${t.why}</b> ${s.why}</p>
+        <div class="real"><b>${t.real}</b>${s.real}</div>`;
     } else if (selected.kind === "loop") {
-      const l = LOOP[selected.id];
-      d.innerHTML = `<h2>Loop step ${selected.id + 1} · ${l.name}</h2><p class="sub">Part of the weekly self-improvement loop.</p>
-        <p>${l.text}</p><p><b>Why it matters:</b> A normal tool stays as good as the day it was set up. The loop means each week's mistakes make next week's work better, with a person signing off on every change to the rules.</p>
-        <div class="real"><b>In the real system</b>${l.real}</div>`;
+      const l = t.loop[selected.id];
+      d.innerHTML = `<h2>${t.loopStep} ${selected.id + 1} · ${l.name}</h2><p class="sub">${t.loopPart}</p>
+        <p>${l.text}</p><p><b>${t.why}</b> ${t.loopWhy}</p>
+        <div class="real"><b>${t.real}</b>${l.real}</div>`;
     } else {
-      const tk = tokens.find(t => t.id === selected.id);
-      if (!tk) { d.innerHTML = `<h2>Work order #${selected.id}</h2><p>This work order has left the floor. Its full story is in the logbook, and in the list below.</p>`; return; }
-      const kind = { clear: "a clear request", vague: "a vague request", risky: "a sensitive request", stranger: "a request from outside the team" }[tk.type];
-      d.innerHTML = `<h2>Work order #${tk.id}</h2><p class="sub">“${esc(tk.title)}”, ${kind}. Now at: <b>${STATIONS[tk.stage].name}</b>.</p>
-        <p><b>Its journey so far:</b></p><ol>${tk.journey.map(j => `<li>${esc(j)}</li>`).join("")}</ol>
-        <div class="real"><b>So far</b>${tk.mins} min of people-time · $${tk.cost.toFixed(2)} of AI time · ${Math.max(0, tk.attempts)} build attempt${tk.attempts === 1 ? "" : "s"}</div>`;
+      const tk = tokens.find(x => x.id === selected.id);
+      if (!tk) { d.innerHTML = `<h2>${t.order} #${selected.id}</h2><p>${t.orderGone}</p>`; return; }
+      d.innerHTML = `<h2>${t.order} #${tk.id}</h2><p class="sub">“${esc(titleOf(tk))}”, ${t.kinds[tk.type]}. ${t.nowAt} <b>${t.stations[STATIONS[tk.stage].id].name}</b>.</p>
+        <p><b>${t.journey}</b></p><ol>${tk.journey.map(j => `<li>${esc(t.step[j.key](...j.args))}</li>`).join("")}</ol>
+        <div class="real"><b>${t.soFar}</b>${t.soFarLine(tk.mins, tk.cost.toFixed(2), Math.max(0, tk.attempts))}</div>`;
     }
   }
 
-  // ───────────────────────── main loop ─────────────────────────
+  // ═════════════════════════ MAIN LOOP ═════════════════════════
   function frame(now) {
     const dt = last ? Math.min(.1, (now - last) / 1000) * speed : 0; last = now;
     if (running && dt > 0) {
@@ -648,10 +937,10 @@ footer { font-size: 13.5px; color: var(--muted); max-width: 80ch; }
     requestAnimationFrame(frame);
   }
 
-  // ───────────────────────── controls ─────────────────────────
+  // ═════════════════════════ CONTROLS ═════════════════════════
   const runBtn = $("#run");
   function setRunning(v) {
-    running = v; runBtn.textContent = v ? "Pause" : "Start the line"; runBtn.setAttribute("aria-pressed", String(v));
+    running = v; runBtn.textContent = v ? T().ui.pause : T().ui.start; runBtn.setAttribute("aria-pressed", String(v));
     document.body.classList.toggle("running", v);
   }
   runBtn.addEventListener("click", () => setRunning(!running));
@@ -663,13 +952,13 @@ footer { font-size: 13.5px; color: var(--muted); max-width: 80ch; }
   $("#reset").addEventListener("click", () => boot({}));
 
   function boot(data) {
-    tokens.forEach(t => t.el.remove()); tokens = []; nextId = 1; focusId = null;
+    tokens.forEach(x => x.el.remove()); tokens = []; nextId = 1; focusId = null; logEntries = [];
     S = Object.assign(fresh(), data && data.S ? data.S : {});
     if (data && data.nextId) nextId = data.nextId;
-    $("#log").innerHTML = ""; setLoopStatus(S.history.length ? "The next weekly review starts at the end of this week." : "Waiting for the first week to finish…");
+    loopStatus = { key: S.history.length ? "next" : "waiting", args: [] };
     selected = { kind: "station", id: "workshop" };
-    renderDetail(); renderBook(); drawChart(); updateTallies();
-    log("The factory opens. Requests will start arriving. Try sending your own with the buttons above.");
+    applyLang(); renderBook();
+    log("opened");
     if (!S.history.length) { addRequest("clear"); addRequest("vague"); }
     setRunning(!reduce);
   }
